@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Historia 50/50 — Supervivencia por decisiones (18 rondas)</title>
+  <style>
+    :root{
+      --bg:#0b0e14;--card:#121725;--muted:#9aa4b2;--text:#e6e6e6;--primary:#7c5cff;--accent:#00d3a7;--danger:#ff4d6d;--ok:#46d369;--stroke:#212843;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+      .card img {
+      max-width: 180px;   /* límite ancho */
+      max-height: 250px;  /* límite alto */
+      min-width: 120px;   /* tamaño mínimo */
+      object-fit: contain; /* mantiene proporción sin recortar */
+      display: block;
+      margin: 0 auto; /* centrar dentro de la carta */
+  }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial;color:var(--text);background:radial-gradient(1200px 600px at 20% -10%,#161a2a,transparent),radial-gradient(900px 500px at 120% 10%,#12162a,transparent),var(--bg)}
+    .wrap{max-width:1160px;margin:24px auto;padding:16px}
+    h1{font-size:28px;margin:8px 0 16px;letter-spacing:.3px}
+    .sub{color:var(--muted);font-size:14px;margin-bottom:10px}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .panel{flex:1 1 380px;background:linear-gradient(180deg,#121726,#0e1322);border:1px solid var(--stroke);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+    .bar{height:8px;background:#1c2236;border-radius:6px;overflow:hidden}
+    .bar>span{display:block;height:100%;background:linear-gradient(90deg,#4fc3f7,#7c5cff);width:0}
+    .muted{color:var(--muted)}
+    .btn{background:linear-gradient(180deg,#7f68ff,#5f3dff);border:1px solid #6f59ff;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(127,104,255,.35)}
+    .btn.alt{background:#1b2339;border-color:#303a5a;box-shadow:none;color:#d7dbff}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .tag{display:inline-flex;align-items:center;gap:6px;background:#1b2339;border:1px solid #2a355a;color:#cfd6ff;border-radius:999px;padding:6px 10px;font-size:12px;margin-right:8px}
+    .kpi{display:inline-flex;align-items:center;gap:6px;background:#111827;border:1px solid #222b45;border-radius:8px;padding:4px 8px;color:#cbd5e1;font-size:12px}
+    .grid{display:grid;gap:14px;grid-template-columns:repeat(2,minmax(0,1fr))}
+    .card{border:1px solid var(--stroke);background:linear-gradient(180deg,#0f1424,#0c1120);border-radius:14px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+    .card:hover{outline:2px solid #6a5cff}
+    .thumb{aspect-ratio:16/10;background:#0a0f1e;display:grid;place-items:center}
+    .thumb img{width:100%;height:100%;object-fit:cover}
+    .choice{padding:12px}
+    .choice h4{margin:0 0 6px;font-size:16px}
+    .choice p{margin:0;color:#9aa4b2;font-size:13px}
+    .pill{position:absolute;top:10px;left:10px;background:#0f172a;border:1px solid #27314f;color:#cbd5e1;border-radius:999px;font-size:11px;padding:4px 8px}
+    .score{display:flex;align-items:center;gap:8px}
+    .score b{font-size:15px}
+    .log{list-style:none;margin:0;padding:0;max-height:260px;overflow:auto}
+    .log li{border-left:3px solid #263155;background:#0f1424;border-radius:8px;margin:8px 0;padding:8px 10px;color:#c9d3e6}
+    .footer{display:flex;gap:10px;align-items:center}
+    .pill.bad{border-color:#542335;color:#ffc1cf}
+    .pill.good{border-color:#274d3f;color:#b9ffdf}
+    .end{display:grid;grid-template-columns:1fr 300px;gap:16px}
+    .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .sum-card{background:linear-gradient(180deg,#0a1020,#0a0f1c);border:1px solid var(--stroke);border-radius:12px;overflow:hidden}
+    .sum-card .thumb{aspect-ratio:1/1}
+    .sum-card h5{margin:8px 10px;font-size:13px}
+    .mini{font-size:12px;color:#9aa4b2;margin:0 10px 10px}
+    .seed{font-variant-numeric:tabular-nums}
+    .help{font-size:12px;color:#aab}
+    #audit{margin-top:10px;font-size:12px;color:#cbd5e1}
+    #audit ul{margin:6px 0 0 16px}
+    @media (max-width:980px){.end{grid-template-columns:1fr}}
+
+
+    
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Historia 50/50 — <span class="muted">arma tu destino en 20 decisiones</span></h1>
+
+    <div class="row">
+      <div class="panel">
+        <h3>¿Sobrevivirás?</h3>
+        <p class="sub">Primero eliges <b>mapa</b> (no cuenta) y luego 20 rondas: <b>enemigos</b>, <b>objetos</b>, <b>aliados</b>, <b>habilidades</b> y 2 <b>jefes</b>. Ocultamos números hasta que elijas.</p>
+        <div class="row">
+          <div class="kpi">Rondas: <b id="kpiRondas">20</b></div>
+          <div class="kpi">Base de supervivencia: <b id="kpiBase">70%</b></div>
+          <div class="kpi">Modelo: <b>Riesgo vs. Ventaja + Sinergias</b></div>
+        </div>
+        <div class="footer" style="margin-top:12px;gap:12px;flex-wrap:wrap">
+          <button class="btn" href="https://luiskq1225-dotcom.github.io/survigames/"> Menu <3 </a>
+          <button id="btnStart" class="btn">Comenzar</button>
+          <button id="btnSeed" class="btn alt">Cambiar semilla</button>
+          <button id="btnAudit" class="btn alt">Revisar imágenes faltantes</button>
+          <div id="audit" class="help"></div>
+          <span class="help" style="flex:1 1 100%">Tip: el mapa ahora pesa los sorteos (más variedad por escenario) y no repite opciones en la misma partida.</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div>
+            <b id="roundTitle">Preludio: Elige el mapa (no cuenta)</b>
+            <div class="help">Las cartas muestran tipo y tags, <b>no números</b> hasta que elijas.</div>
+          </div>
+          <div class="kpi seed">Semilla: <span id="seedLabel">—</span></div>
+        </div>
+        <div class="bar" title="Progreso"><span id="prog"></span></div>
+        <div id="choices" class="grid" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="panel" style="flex:2">
+        <b>Registro</b>
+        <ul id="log" class="log"></ul>
+      </div>
+      <div class="panel" style="flex:1">
+        <b>Estado</b>
+        <div style="display:grid;gap:10px;margin-top:8px">
+          <div class="score"><span class="tag">Poder equipo</span> <b id="poder">0</b></div>
+          <div class="score"><span class="tag">Peligro acumulado</span> <b id="peligro">0</b></div>
+          <div class="score"><span class="tag">Objetos</span> <b id="nObj">0</b></div>
+          <div class="score"><span class="tag">Aliados</span> <b id="nAl">0</b></div>
+          <div class="score"><span class="tag">Habilidades</span> <b id="nHab">0</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="end" class="panel end" style="display:none">
+      <div>
+        <h3>Resumen de tu historia</h3>
+        <div id="summary" class="summary"></div>
+      </div>
+      <div>
+        <h3>¿Sobreviviste?</h3>
+        <div class="bar" style="height:14px;margin-bottom:8px"><span id="finalBar"></span></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <div class="kpi">Supervivencia estimada: <b id="finalPct">—</b></div>
+        </div>
+        <div id="finalTxt" class="sub"></div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn" onclick="location.reload()">Volver a jugar</button>
+          <button class="btn alt" id="btnShare">Copiar semilla & build</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ---------- Utilidades
+function xmur3(str){ for(var i=0,h=1779033703^str.length;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353); h=h<<13|h>>>19} return function(){h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); return (h^h>>>16)>>>0} }
+function sfc32(a,b,c,d){ return function(){a|=0;b|=0;c|=0;d|=0;var t=(a+b|0)+d|0; d=d+1|0; a=b^b>>>9; b=c+(c<<3)|0; c=(c<<21|c>>>11); c=c+t|0; return (t>>>0)/4294967296} }
+function seededRNG(seed){ const seedr = xmur3(String(seed)); return sfc32(seedr(), seedr(), seedr(), seedr()); }
+const fmt = n => Math.round(n);
+const slug = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+
+// Weighted sample sin reemplazo
+function sampleWeighted(list, weights, n, rng){
+  const out=[]; const pool=list.slice(); const w=weights.slice();
+  for(let k=0; k<n && pool.length>0; k++){
+    const total=w.reduce((a,b)=>a+b,0);
+    let r=rng()*total, idx=0;
+    for(; idx<w.length && r>=w[idx]; idx++) r-=w[idx];
+    if(idx>=pool.length) idx=pool.length-1;
+    out.push(pool[idx]);
+    pool.splice(idx,1); w.splice(idx,1);
+  }
+  return out;
+}
+
+function makeBadge(kind){
+  const emoji = kind==='enemigo'?'👾': kind==='jefe'?'🐲': kind==='aliado'?'🧑‍🤝‍🧑': kind==='objeto'?'🎒': kind==='habilidad'?'✨': kind==='evento'?'🎲':'🗺️';
+  const svg = encodeURIComponent(`<?xml version='1.0' encoding='UTF-8'?>
+    <svg xmlns='http://www.w3.org/2000/svg' width='600' height='360'>
+      <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+        <stop offset='0%' stop-color='#232a50'/><stop offset='100%' stop-color='#6b5cff'/>
+      </linearGradient></defs>
+      <rect width='100%' height='100%' fill='url(#g)'/>
+      <text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-size='160'>${emoji}</text>
+    </svg>`);
+  return `data:image/svg+xml;charset=utf-8,${svg}`;
+}
+
+// ---------- Imagenes (por slug) (conservadas)
+const IMG = {
+ 'mr-game-and-watch':'https://static.wikia.nocookie.net/ssb/images/5/50/Mr._Game_%26_Watch_SSBU.png',
+  'sephiroth':'https://static.wikia.nocookie.net/ssb/images/2/20/Sephiroth_SSBU.png',
+  'cloud-strife':'https://static.wikia.nocookie.net/ssb/images/0/07/Cloud_SSBU.png',
+  'simon-belmont':'https://static.wikia.nocookie.net/ssb/images/0/0c/Simon_SSBU.png',
+  'richter-belmont':'https://static.wikia.nocookie.net/ssb/images/f/f5/Richter_SSBU.png',
+  'dracula-castlevania':'https://static.wikia.nocookie.net/castlevania/images/2/29/Dracula_Judgement.png',
+  'steve-minecraft':'https://static.wikia.nocookie.net/ssb/images/f/ff/Steve_SSBU.png',
+  'herobrine':'https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2c/Herobrine.png',
+  'vampire-killer-whip':'https://static.wikia.nocookie.net/castlevania/images/7/7c/Vampire_Killer_Art.png',
+  'masamune-sephiroth':'https://static.wikia.nocookie.net/finalfantasy/images/7/7a/Masamune_VII_Remake.png',
+  'terra-blade':'https://terraria.wiki.gg/images/7/7a/Terra_Blade.png',
+  'shiba-inu':'https://upload.wikimedia.org/wikipedia/commons/6/6d/Shiba_Inu_Mame.jpg',
+  'piedrero':'https://upload.wikimedia.org/wikipedia/commons/0/0b/Rock_sample.jpg',
+  'armored-titan-reiner':'https://static.wikia.nocookie.net/shingekinokyojin/images/5/50/Armored_Titan.png',
+  'vaquipandi':'https://i.imgur.com/i3pP9Lq.png', // usa tu URL si tienes una mejor
+  'godzilla-bloodbath':'https://preview.redd.it/can-anyone-explain-to-me-the-blood-bath-godzilla-v0-al9b41a5brce1.png?auto=webp&s=bbf0e840d38db6eaf29ca76346cef71ea0228de4',
+  'colossal-titan':'https://static.wikia.nocookie.net/shingekinokyojin/images/e/ed/Colossal_Titan_%28Anime%29_character_image_%28Armin_Arlelt%29.png/revision/latest?cb=20220222211301',
+  'xenomorfo-praetorian':'https://www.avpcentral.com/images/praetorian/praetorian-in-aliens-fireteam.jpg',
+  'nemesis':'https://oyster.ignimgs.com/mediawiki/apis.ign.com/re3-remake/f/f3/Nemesis-1578654472343.jpg',
+  'slenderman':'https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Slenderman_monochromatic_man_in_suit_with_tendrils_by_Vishchun.png/330px-Slenderman_monochromatic_man_in_suit_with_tendrils_by_Vishchun.png',
+  'cthulhu':'https://static.wikia.nocookie.net/lovecraft/images/0/0a/Screenshot_20171022-085959.jpg/revision/latest?cb=20171022140133',
+  'boolossus':'https://static.wikia.nocookie.net/mansionluigi/images/4/41/LM_3DS_Boolossus.jpg/revision/latest?cb=20200913162858',
+  'clicker-tlou':'https://i.redd.it/clicker-from-the-last-of-us-design-created-by-me-v0-2mkmm7p7oqka1.jpg?width=2722&format=pjpg&auto=webp&s=528dea660e598aac14486942e6a03f19e0519d2c',
+  'zarigueya-furiosa':'https://cdn0.expertoanimal.com/es/posts/7/3/3/las_zarigueyas_son_agresivas_o_peligrosas_23337_orig.jpg',
+  'enderman':'https://preview.redd.it/i-made-a-realistic-enderman-digital-sculpture-v0-jebvvujap0la1.jpg?width=640&crop=smart&auto=webp&s=bf59ccd34172710cb70e19d0994b01959ba432ab',
+  'gremlins':'https://nightmarenostalgia.com/wp-content/uploads/2024/05/gremlins-1984-06-g.jpg',
+  'repo-cabeza':'https://i.blogs.es/fa6816/monstruos-repo/840_560.jpeg',
+  'foxy':'https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/0/07/Foxy_%28Original%29.png/revision/latest?cb=20190304234251&path-prefix=es',
+  'baron-nashor':'https://static.wikia.nocookie.net/leagueoflegends/images/1/15/Baron_Nashor_OriginalSkin.jpg/revision/latest?cb=20231129013246',
+  'aatrox':'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Aatrox_0.jpg',
+  'garen':'https://static.wikia.nocookie.net/leagueoflegends/images/9/99/Garen_Render.png',
+  'lux':'https://static.wikia.nocookie.net/leagueoflegends/images/f/f4/Lux_Render.png',
+  'soraka':'https://static.wikia.nocookie.net/leagueoflegends/images/c/cd/Soraka_Render.png',
+  'braum':'https://static.wikia.nocookie.net/leagueoflegends/images/d/d5/Braum_Render.png',
+  'kayle':'https://static.wikia.nocookie.net/leagueoflegends/images/5/5d/Kayle_Zealous_Render.png',
+  'muzan-kibutsuji':'https://static.wikia.nocookie.net/kimetsu-no-yaiba/images/0/0e/Muzan_Kibutsuji_Full_Body_%28Anime%29.png/revision/latest?cb=20210731042132',
+  'moon-lord':'https://i.pinimg.com/736x/c8/9e/28/c89e28a8486c41ee0dc98b03915b87a6.jpg',
+  'skeletron-prime':'https://terraria.wiki.gg/images/6/6d/Skeletron_Prime.png',
+  'the-twins':'https://images.steamusercontent.com/ugc/939465706357213058/495ED9FEC8DB691DCE0D51C44C677F8DE526258B/?imw=1024&imh=576&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=true',
+  'plantera':'https://i.redd.it/41as4s5zeld31.png',
+  'master-sword':'https://upload.wikimedia.org/wikipedia/en/thumb/f/f9/Master_Sword_Lead.png/250px-Master_Sword_Lead.png',
+  'espada-de-zora':'https://images.cults3d.com/5uhFMr7vONPfyDlRuHD7GMkiyzY=/516x516/filters:no_upscale()/https://fbi.cults3d.com/uploaders/23688814/illustration-file/99da1117-a026-4a44-bcb7-3a1a545013d1/ZoraSword.png',
+  'portal-gun':'https://static.wikia.nocookie.net/half-life/images/b/bb/Aperture_Science_Handheld_Portal_Device_Portal.jpg/revision/latest?cb=20110519012833&path-prefix=en',
+  'linterna-recargable':'https://static.vecteezy.com/system/resources/previews/035/553/472/non_2x/pixel-art-illustration-flashlight-pixelated-flashlight-flashlight-pixelated-for-the-pixel-art-game-and-icon-for-website-and-video-game-old-school-retro-vector.jpg',
+  'sandvich-infinito':'https://static.wikia.nocookie.net/teamfortress/images/e/ea/Sandvich_.png/revision/latest?cb=20250224172329',
+  'banana-infinita':'https://thumbs.dreamstime.com/b/banana-%C3%BAnica-en-forma-de-s%C3%ADmbolo-infinito-que-muestra-su-color-y-textura-amarillo-vibrante-un-pl%C3%A1tano-se-creativamente-mantiene-350786856.jpg',
+  'hylian-shield':'https://img.pacifiko.com/PROD/resize/1/500x500/NWQxNmNiNj.jpg',
+  'pala-de-diamante':'https://minecraft.wiki/images/Diamond_Shovel_JE3_BE3.png?fd904',
+  'crowbar':'https://i.ytimg.com/vi/MWjEwMNLMMs/maxresdefault.jpg',
+  'espada-galactica':'https://stardewvalleywiki.com/mediawiki/images/8/8f/Galaxy_Sword.png',
+  'regadera-de-iridio':'https://stardewvalleywiki.com/mediawiki/images/6/60/Iridium_Watering_Can.png',
+  'escudo-del-heroe':'https://i.pinimg.com/564x/7d/be/4a/7dbe4a2d162cb76e0badaf4656c17edc.jpg',
+  'chidori':'https://narutoversity.wordpress.com/wp-content/uploads/2020/07/kakashis-raikiri.png',
+  'rasengan':'https://static.wikia.nocookie.net/naruto/images/6/60/Rasengan_Anime.png/revision/latest?cb=20140318003114&path-prefix=es',
+  'espacio-infinito':'https://static.wikia.nocookie.net/jujutsu-kaisen/images/b/ba/Episodio_07_-_210.jpg/revision/latest/scale-to-width-down/1200?cb=20201126155337&path-prefix=es',
+  'la-fuerza':'https://img.europapress.es/fotoweb/fotonoticia_20230626145247_690.jpg',
+  'invisibilidad':'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRUJBMZ0tdiEJJbL83kE2VnWfef23uUVFhavQ&s',
+  'haki-observacion':'https://i.ytimg.com/vi/wSqF1Bt_YSA/sddefault.jpg',
+  'dash':'https://lol.dyn.riotcdn.net/x/videos/champion-abilities/0039/ability_0039_Q1.jpg',
+  'respiracion-del-agua':'https://alfabetajuega.com/hero/2021/04/Respiraci%C3%B3n-del-Agua.jpg?width=768&aspect_ratio=16:9&format=nowebp',
+  'nen-emision':'https://static.wikia.nocookie.net/hunterxhunter/images/1/16/Nen_Diagram.png/revision/latest?cb=20150831134340',
+  'rubius':'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNoXgfODkxVfkrCfCmHbsXsU_E5irVOxeWxGDmo74Pwz5-bWdQO26HD1geSUXKYtR_Xlc&usqp=CAU',
+  'fernanfloo':'https://www.famousbirthdays.com/faces/fernanfloo-image.jpg',
+  'vegetta777':'https://img.blogs.es/vizzagency/wp-content/uploads/2022/09/edit-3-3.jpg',
+  'willyrex':'https://e01-phantom-marca.uecdn.es/76ddff7e675c6002d271d8e3b345d91f/f/jpg/assets/multimedia/imagenes/2019/07/13/15630045096883.jpg',
+  'xocas':'https://www.lavozdegalicia.es/default/2024/10/24/00121729778302139769802/Foto/XOCAS.jpg',
+  'diego-garro':'https://yt3.googleusercontent.com/2B59qmRkjJUdluZy65mSprg40smra6A4NUkD930fQXwGCIeC_lyRmMkh4e2T20D9HBwIUV2faA=s900-c-k-c0x00ffffff-no-rj',
+  'frijol-perro':'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQqjmTl5fMLzcQFK5aDIs9_TplSp09WeG1SK4Lc2gGfkmsJcidEjrWq4NOmbFVPt5QTPC8&usqp=CAU',
+  'ibai':'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwMstnnwrN48BIZVMp4ddV0eN6kIswaIqjzP2MewjP0K59_qVU-mLIA3V_gqBUYpNX5TY&usqp=CAU',
+  'illojuan':'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLMRsV1R-AqOQX8HVPWA7n12XsGsaF6mVwOQ&s',
+  'auron':'https://image.ondacero.es/clipping/cmsimages02/2017/03/09/959B78F7-9584-4170-8486-01647BB6B845/104.jpg?crop=425,425,x65,y0&width=1200&height=1200&optimize=low&format=webply',
+  'wilson-gato':'https://phantom-marca.unidadeditorial.es/8437339e959c0170984392ddb13ed6a6/crop/0x108/749x528/resize/640/assets/multimedia/imagenes/2021/09/24/16325006293844.jpg',
+  'vicente-caballo':'https://i.ytimg.com/vi/_IZvojLj98s/maxresdefault.jpg',
+  'trotuman':'https://media.forgecdn.net/avatars/thumbnails/236/789/256/256/637095233918654694.png',
+  'curly-perro':'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBQVoBzd6VxEWRUDXqGWofWUQD8e7S2Z9kxg&s',
+  'corny-cr':'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTyrKm0QPVgwAlkJhAygcSeZZSVc8msVhMDw&s',
+  'spreen':'https://cdn.resfu.com/media/img_news/spreen-durante-el-deportivo-riestra-velez-sarsfield-de-la-liga-profesional-argentina--efe.jpg?size=1000x&lossy=1',
+  'german-garmendia':'https://telefe-static.akamaized.net/media/18271682/captura-de-pantalla-2025-07-07-163533.png?width=888&height=500&mode=crop',
+  'mimi-perro':'https://i.pinimg.com/736x/1f/c8/2c/1fc82c1184bb1148624d0c6bd6416eaf.jpg',
+  'mauu':'https://i.redd.it/6a0adfoxsp951.jpg',
+  'fargan':'https://imagenes.atresplayer.com/atp/clipping/cmsimages01/2020/10/27/8413C0AC-CE17-4AC4-AC54-FE01D2597C13//720x960.jpg',
+  'alexby':'https://avatars.fastly.steamstatic.com/741390d93531dec015adf2a156642c8c01e79f11_full.jpg',
+  'gon-freecss':'https://static.wikia.nocookie.net/hunterxhunter/images/3/3e/HxH2011_EP147_Gon_Portrait.png/revision/latest?cb=20230904181801',
+  'killua-zoldyck':'https://static0.cbrimages.com/wordpress/wp-content/uploads/2021/03/Killua-Cropped.jpg',
+  'hisoka':'https://preview.redd.it/ut3inqd54hz51.png?width=1280&format=png&auto=webp&s=9fa4807b04e2212d5adef56181a1122969b56b7c',
+  'meruem':'https://static0.cbrimages.com/wordpress/wp-content/uploads/2019/12/Meruem-Specialist-Featured.jpg?w=1600&h=900&fit=crop',
+  'gojo-satoru':'https://static.wikia.nocookie.net/jujutsu-kaisen/images/5/5a/Satoru_Gojo_arrives_on_the_battlefield_%28Anime%29.png/revision/latest?cb=20210226205256',
+  'sukuna':'https://sukuna.co.uk/wp-content/uploads/2024/05/sukuna-jjk.jpg',
+  'iron-man':'https://upload.wikimedia.org/wikipedia/commons/0/0e/Iron_Man_Mk_III.jpg',
+  'doors-figure':'https://i1.sndcdn.com/artworks-ZYodxFaNvdhelhkA-wMpSOg-t500x500.jpg',
+  'doors-seek':'https://static.wikia.nocookie.net/doors-game/images/c/c0/Seek2.png/revision/latest?cb=20240730083641',
+  'mimic-sama':'https://i.pinimg.com/736x/eb/55/74/eb557409d80867614f2848335cd78e0d.jpg',
+  'rainbow-blue':'https://static.wikia.nocookie.net/villains/images/8/80/BlueModel2.png/revision/latest/thumbnail/width/360/height/360?cb=20231229031755',
+  'piggy':'https://www.exitlag.com/blog/wp-content/uploads/2024/12/roblox-piggy-2.webp',
+  'local-58':'https://m.media-amazon.com/images/M/MV5BNjgxMjdjOTItMjcxMS00YThkLThhYjgtZDg2ZWU1ODg2ZjJlXkEyXkFqcGc@._V1_.jpg',
+  'mandela-intruder':'https://static.wikia.nocookie.net/analog-horror-0/images/f/fa/This_is_intruder_from_vol4.png/revision/latest?cb=20240412165500',
+  'backrooms-smiler':'https://static.wikitide.net/backroomswiki/f/fb/Smiler.png',
+  'walten-bon':'https://static.wikia.nocookie.net/the-walten-files-new/images/c/c8/Big_damage_bon_good_crop.png/revision/latest?cb=20240830125235',
+  'huggy-wuggy':'https://www.radioimagina.cl/wp-content/uploads/2022/04/HUGGY-WUGGY-4.jpg',
+  'mommy-long-legs':'https://oyster.ignimgs.com/mediawiki/apis.ign.com/poppy-playtime/1/19/20240528040755_1.jpg',
+  'ink-demon':'https://art.ngfiles.com/images/2884000/2884580_seyermon_the-ink-demon-is-coming-hide.png?f1669442062',
+  'all-for-one':'https://i.namu.wiki/i/VP5NhF7mDa_RfkRDEEgdzrAnkX4mcFVrQYJqzCCeqPA4kNrdn_eyTX1Ew7rGKQbnSFXWjEYDeFz6DRhZcqBhFQ.webp',
+  'deku':'https://pm1.aminoapps.com/6867/2e70d8b878d43505d2103f7e9c479b3fb32718f1r1-904-797v2_hq.jpg',
+  'uraraka':'https://static0.gamerantimages.com/wordpress/wp-content/uploads/2025/02/uraraka-graduation-thumbnail.jpg?w=1600&h=900&fit=crop',
+  'todoroki':'https://i0.wp.com/codigoespagueti.com/wp-content/uploads/2021/10/Este-es-el-ranking-de-las-peliculas-del-MCU-segun-Rotten-Tomatoes-5.png',
+  'bakugo':'https://i.pinimg.com/736x/03/4a/a7/034aa76d0892d3f421f25ed8116d186f.jpg',
+  'all-for-one-hab':'https://static.wikia.nocookie.net/bokunoheroacademia/images/a/a5/All_For_One_using_multiple_Quirks.png/revision/latest?cb=20201111093919',
+  'kirby':'https://static.wikia.nocookie.net/ssb/images/6/63/Kirby_SSBU.png',
+  'kirby-hammer':'https://static.wikia.nocookie.net/kirby/images/b/b1/HammerArtwork.png',
+
+  // SCPs (fandom / wiki; usa tus URLs favoritas si quieres)
+  'scp-682':'https://static.wikia.nocookie.net/scp-wiki/images/3/3b/SCP-682.jpg',
+  'scp-106':'https://static.wikia.nocookie.net/scp-wiki/images/6/6f/SCP-106.jpg',
+  'scp-049':'https://static.wikia.nocookie.net/scp-wiki/images/0/03/SCP-049.jpg',
+  'scp-847':'https://static.wikia.nocookie.net/scp-wiki/images/1/1f/SCP-847.jpg',
+  'scp-173':'https://static.wikia.nocookie.net/scp-wiki/images/3/3d/SCP-173.jpg',
+  'scp-096':'https://static.wikia.nocookie.net/scp-wiki/images/5/59/SCP-096.jpg',
+  'scp-2317':'https://static.wikia.nocookie.net/scp-wiki/images/f/f5/SCP-2317.jpg',
+
+
+    // ---- nuevos pedidos
+  'golden-retriever':'https://upload.wikimedia.org/wikipedia/commons/9/9c/Golden_Retriever_medium-to-light-coat.jpg',
+  'labrador-retriever':'https://upload.wikimedia.org/wikipedia/commons/2/26/YellowLabradorLooking_new.jpg',
+  'akita-inu':'https://upload.wikimedia.org/wikipedia/commons/3/3e/Akita_inu.jpeg',
+  'siberian-husky':'https://upload.wikimedia.org/wikipedia/commons/6/60/Siberian_Husky_pho.jpg',
+  'zaguate-caramelo':'https://upload.wikimedia.org/wikipedia/commons/3/35/Vira-lata_caramelo.jpg',
+
+  'kakashi-hatake':'https://static.wikia.nocookie.net/naruto/images/1/15/KakashiHatakePartII.png',
+  'pain-akatsuki':'https://static.wikia.nocookie.net/naruto/images/1/1c/Nagato_Pain_Anime.png',
+  'madara-uchiha':'https://static.wikia.nocookie.net/naruto/images/5/5f/Madara_Uchiha_Infobox.png',
+
+  'backrooms-partygoer':'https://static.wikitide.net/backroomswiki/6/6e/Partygoer.png',
+  'zombies-horde':'https://static.wikia.nocookie.net/projectzomboid/images/7/79/Zombie.png',
+  'snk-pure-titan':'https://static.wikia.nocookie.net/shingekinokyojin/images/8/8e/Pure_Titan_Anime.png',
+
+  'beru-solo-leveling':'https://static.wikia.nocookie.net/solo-leveling/images/6/6a/Beru_Anime.png'
+
+};
+
+// ---------- Catálogos (con nerfs/buffs y el Tenedor)
+const LOCATIONS = [
+  {name:'Isla desierta', slug:'isla-desierta', hazard:2, tags:['aislado','arena'], img:'https://media.gettyimages.com/id/1448870197/es/v%C3%ADdeo/vista-a%C3%A9rea-de-la-isla-desierta-y-oscura-video-de-archivo-4k.jpg?s=640x640&k=20&c=-gs0oUR8YmpA5YJYyvyJS2SeBiBZ_eLIrwMZiy9JnV4='},
+  {name:'Desierto', slug:'desierto', hazard:3, tags:['calor'], img:'https://i.pinimg.com/736x/42/f5/8b/42f58b04a8b625c19762fe34cef697f4.jpg'},
+  {name:'Casa abandonada', slug:'casa-abandonada', hazard:2, tags:['oscuro','urbano'], img:'https://live.staticflickr.com/8629/16548641448_3b0b13898f_b.jpg'},
+  {name:'Parque jurásico', slug:'parque-jurasico', hazard:4, tags:['dinosaurios'], img:'https://www.nacion.com/resizer/v2/JEWIAAVCOFF2JLM46DOHCTI4GY.png?smart=true&auth=a2d764408d69b91f598a0819652f99ffab1d84834b043b84ccb3157ba3546b7d&width=1366&height=768'},
+  {name:'Silent Hill', slug:'silent-hill', hazard:4, tags:['niebla','terror','urbano'], img:'https://i.blogs.es/abaf54/sin-titulo---2025-06-24t150528.667/500_333.jpeg'},
+  {name:'Laboratorio Umbrella', slug:'umbrella-lab', hazard:5, tags:['virus','corporativo','maquinas'], img:'https://cdna.artstation.com/p/assets/images/images/016/960/160/large/danny-greenan-shot1.jpg?1554136933'},
+  {name:'Pizzería FNAF Sister Location', slug:'fnaf-sister-location', hazard:3, tags:['animatronico','oscuridad'], img:'https://images.launchbox-app.com/a7c62c5e-63d3-44a6-b172-abd6cd12737c.jpg'},
+  {name:'The Backrooms', slug:'the-backrooms', hazard:5, tags:['liminal','analogico'], img:'https://static0.moviewebimages.com/wordpress/wp-content/uploads/2023/02/the-backrooms-found-footage-0-57-screenshot.png'}
+];
+
+
+const INVOCATIONS = [
+    // Gen 1
+  {name:'Pikachu (Gen 1)',   slug:'pkmn-pikachu',   power:6, tags:['invocado','pokemon','electrico','companion'], img: 'https://www.denofgeek.com/wp-content/uploads/2021/04/Pikachu.png?resize=768%2C432'},
+  {name:'Bulbasaur (Gen 1)', slug:'pkmn-bulbasaur', power:6, tags:['invocado','pokemon','planta','companion'],   img:'https://static0.srcdn.com/wordpress/wp-content/uploads/Bulbasaur-Looking-Up.jpg'},
+  {name:'Charmander (Gen 1)',slug:'pkmn-charmander',power:6, tags:['invocado','pokemon','fuego','companion'],    img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRB1wIuX8-eJ3fX9eiPeYEYi3SEspyIPWMf55XUIWyJ8Y51Wa8GiGtfUfFeIepjWou5o_c&usqp=CAU'},
+  {name:'Squirtle (Gen 1)',  slug:'pkmn-squirtle',  power:5, tags:['invocado','pokemon','agua','companion'],     img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTIvyK38HshaQ0tf2yO9a9BD8xGQlW_rh8vyg&s'},
+  {name:'Eevee (Gen 1)',     slug:'pkmn-eevee',     power:5, tags:['invocado','pokemon','companion'],            img:'https://oyster.ignimgs.com/mediawiki/apis.ign.com/pokedex/4/40/800px-Virgil_Eevee.png'},
+  {name:'Jigglypuff (Gen 1)',slug:'pkmn-jigglypuff',power:1, tags:['invocado','pokemon','companion'],            img:'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/039.png'},
+    // Gen 2
+  {name:'Chikorita (Gen 2)', slug:'pkmn-chikorita', threat:10, tags:['invocado','pokemon','planta','companion'],   img: 'https://db.pokemongohub.net/_next/image?url=%2Fimages%2Fofficial%2Ffull%2F152.webp&w=640&q=75'},
+  {name:'Cyndaquil (Gen 2)', slug:'pkmn-cyndaquil', power:5, tags:['invocado','pokemon','fuego','companion'],    img: 'https://db.pokemongohub.net/_next/image?url=%2Fimages%2Fofficial%2Ffull%2F155.webp&w=640&q=75'},
+  {name:'Totodile (Gen 2)',  slug:'pkmn-totodile',  power:5, tags:['invocado','pokemon','agua','companion'],     img:'https://images.wikidexcdn.net/mwuploads/wikidex/thumb/e/e7/latest/20230523210701/Totodile.png/800px-Totodile.png'},
+  {name:'Togepi (Gen 2)',    slug:'pkmn-togepi',    power:3, tags:['invocado','pokemon','suerte','companion'],   img: 'https://oyster.ignimgs.com/mediawiki/apis.ign.com/pokedex/8/85/Misty_Togepi.png?width=325'},
+    // Gen 3
+  {name:'Treecko (Gen 3)',   slug:'pkmn-treecko',   power:5, tags:['invocado','pokemon','planta','companion'],   img:'https://static.pokemonpets.com/images/monsters-images-800-800/252-Treecko.webp'},
+  {name:'Torchic (Gen 3)',   slug:'pkmn-torchic',   power:5, tags:['invocado','pokemon','fuego','companion'],    img:'https://static0.gamerantimages.com/wordpress/wp-content/uploads/2024/07/pokemon-torchic-nature-program.jpg?w=1600&h=900&fit=crop'},
+  {name:'Mudkip (Gen 3)',    slug:'pkmn-mudkip',    power:6, tags:['invocado','pokemon','agua','companion'],     img:'https://db.pokemongohub.net/_next/image?url=%2Fimages%2Fofficial%2Ffull%2F258.webp&w=640&q=75'},
+  {name:'Ralts (Gen 3)',     slug:'pkmn-ralts',     power:6, tags:['invocado','pokemon','psiquis','companion'],  img:'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/280.png'},
+  {name:'Aron (Gen 3)',      slug:'pkmn-aron',      power:6, tags:['invocado','pokemon','acero','companion'],    img:'https://marriland.com/wp-content/plugins/marriland-core/images/pokemon/sprites/home/full/aron.png'},
+    // Gen 5
+  {name:'Snivy (Gen 5)',     slug:'pkmn-snivy',     power:7, tags:['invocado','pokemon','planta','companion'],   img: 'https://images.wikidexcdn.net/mwuploads/wikidex/thumb/9/9a/latest/20200307000325/Snivy.png/800px-Snivy.png'},
+  {name:'Tepig (Gen 5)',     slug:'pkmn-tepig',     power:3, tags:['invocado','pokemon','fuego','companion'],    img:'https://static.wikia.nocookie.net/nintendo/images/b/b8/Tepig_ZA.png/revision/latest/scale-to-width-down/250?cb=20250228023356&path-prefix=en'},
+  {name:'Oshawott (Gen 5)',  slug:'pkmn-oshawott',  power:6, tags:['invocado','pokemon','agua','companion'],     img:'https://static.pokemonpets.com/images/monsters-images-300-300/501-Oshawott.webp'},
+  {name:'Zorua (Gen 5)',     slug:'pkmn-zorua',     power:7, tags:['invocado','pokemon','sombra','companion'],   img:'https://static.pokemonpets.com/images/monsters-images-800-800/570-Zorua.webp'},
+  {name:'Litwick (Gen 5)',   slug:'pkmn-litwick',   power:6, tags:['invocado','pokemon','fuego','luz','companion'], img:'https://archives.bulbagarden.net/media/upload/thumb/c/cf/0607Litwick.png/800px-0607Litwick.png'},
+    // Otros pedidos
+  {name:'Happy (Fairy Tail)',slug:'happy-fairy-tail',power:7, tags:['invocado','volador','companion'], img: 'https://static.wikia.nocookie.net/p__/images/2/23/Happy.png/revision/latest?cb=20190608035250&path-prefix=protagonist'},
+  {name:'Patronus (Ciervo)', slug:'patronus-ciervo', power:3, tags:['invocado','luz','sagrado','companion'], img: 'https://contentful.harrypotter.com/usf1vwtuqyxm/5qcIDAG8I8YY80gwOQw8m2/58fd0eaacd011634b1ad3b03e59933de/Press_image2_stag.jpg?q=75&fm=jpg&w=2560'},
+  {name:'Mascota: Conejito (Terraria)', slug:'terraria-bunny', power:8, tags:['invocado','mascota','suerte'], img: 'https://static.wikia.nocookie.net/terraria_gamepedia/images/1/16/Fuzzy_Carrot_%28demo%29.gif/revision/latest/scale-to-width-down/226?cb=20200222194621'},
+  {name:'Mascota: Baby Slime (Terraria)', slug:'terraria-baby-slime', power:7, tags:['invocado','mascota'], img: 'https://i.redd.it/6egujendofk61.jpg'},
+  {name:'Mascota: Baby Dino (Terraria)', slug:'terraria-baby-dino', power:5, tags:['invocado','mascota'], img:'https://m.media-amazon.com/images/I/41pOV93hQdL.jpg'},
+  {name:'Lobo (Minecraft)',  slug:'minecraft-wolf', power:3, tags:['invocado','mascota','companion'], img:'https://p.turbosquid.com/ts-thumb/de/BGPpW3/4xNRuWG8/img_01/jpg/1472072876/1920x1080/fit_q87/be3b955a90fb6bd3c09b65bec752185d347b00c0/img_01.jpg'},
+  {name:'Gato (Minecraft)',  slug:'minecraft-cat',  power:2, tags:['invocado','mascota','suerte'], img:'https://static.wikia.nocookie.net/minecraft_gamepedia/images/4/4a/Red_Cat_JE1_BE1.png/revision/latest?cb=20200219202611'},
+  {name:'Agumon',            slug:'agumon',         power:8, tags:['invocado','fuego','companion'], img:'https://upload.wikimedia.org/wikipedia/it/thumb/b/b2/Agumon.png/330px-Agumon.png'},
+  {name:'Oleada de mapaches', slug:'racoon-swarm', power:7, tags:['animal','caos'], img:'https://previews.123rf.com/images/linawhite/linawhite1911/linawhite191100016/135039158-many-raccoons-are-sitting-against-a-concrete-wall-and-looking-up-a-lot-of-raccoons.jpg'},
+  {name:'Dragón de Stardust (Terraria)', slug:'stardust-dragon', power:12, tags:['terraria','dragon'], img:'https://i.redd.it/cmvkumy2dde41.png'},
+  {name:'Bastón de aves (Terraria)', slug:'bird-staff', power:6, tags:['terraria','invocador'], img:'https://art.pixilart.com/4b5d894a13234fd.png'},
+  {name:'Bastón de los gemelos (Terraria)', slug:'twins-staff', power:10, tags:['terraria','invocador'], img:'https://static.wikia.nocookie.net/terraria/images/4/48/Optic.png/revision/latest?cb=20171220032509&path-prefix=es'}
+];
+
+const ENEMIES = [
+  // --- pedidos
+
+
+  {name:'Simplemente Duki', slug:'duki-enemy', threat:11, cat:'rapper', tags:['trap','musica'], img:'https://i.imgur.com/0gnG2cJ.jpeg'},
+  {name:'Tapir', slug:'tapir', threat:3, cat:'animal', tags:['selva'], img:'https://wallpapers.com/images/hd/ugly-animals-pictures-804ai1awcs2320w3.jpg'},
+  {name:'Slime mamado', slug:'slime-buff', threat:7, cat:'slime', tags:['musculo','fantasia'], img:'https://images.steamusercontent.com/ugc/2117313645619627165/64A2B9C4AF5C2CE62B6EDA0B45D8723F0C242CB9/?imw=512&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false'},
+  {name:'Akaza (Kimetsu)', slug:'akaza', threat:12, cat:'demonio', tags:['kimetsu','lucha'], img:'https://cdna.artstation.com/p/assets/images/images/071/413/658/large/retratosanime-098.jpg?1705125478'},
+  {name:'Titán mujer (SNK)', slug:'female-titan', threat:12, cat:'titan', tags:['snk','gigante'], img: 'https://dailyanimeart.com/wp-content/uploads/2013/12/female-titan-by-jxbp.png'},
+  {name:'Titán bestia (SNK)', slug:'beast-titan', threat:12, cat:'titan', tags:['snk','gigante'], img:'https://preview.redd.it/before-we-knew-about-zeke-what-were-some-of-your-initial-v0-aiarxjp3vlta1.jpg?width=640&crop=smart&auto=webp&s=807994fab93fc2dbeec278810068cd3981b55813'},
+  {name:'Capybara chill', slug:'capybara', threat:2, cat:'animal', tags:['relax','memes'], img:'https://avatars.fastly.steamstatic.com/9d9d3ae19bcf34e6056e2e54fca2132bdf737102_full.jpg'},
+  {name:'Pain (Akatsuki)', slug:'pain-akatsuki', threat:12, cat:'ninja', img:'https://preview.redd.it/how-pain-does-against-every-member-of-the-akatsuki-v0-idu6s2jqsk7f1.jpeg?width=640&crop=smart&auto=webp&s=08cfbdf7c9ea62a253ed7c64e62e590468b32b8d', tags:['gravitacion','seis-caminos'], desc:'Shinra Tensei.'},
+  {name:'Partygoer (Backrooms Level Fun)', slug:'backrooms-partygoer', threat:7, cat:'analogico', img: 'https://media.sketchfab.com/models/472b932845a447a788712a81305526c6/thumbnails/9d45d40060c6428d8d9a8352e3f5703d/092f1cf7a886433993b98d249253cacf.jpeg', tags:['fiesta','trampa'], desc:'Globos, pastel… y final trágico.'},
+  {name:'Zombis (Horda)', slug:'zombies-horde', threat:4, cat:'infectado', img: 'https://bloody-disgusting.com/wp-content/uploads/2015/07/walkingdeadseason6zombies2.jpg', tags:['plaga','horda'], desc:'Numerosos, ruidosos y tercos.'},
+  {name:'Titán 3m (SNK)', slug:'snk-pure-titan', threat:4, cat:'titan', img:'https://preview.redd.it/my-toxic-trait-is-believing-i-could-defeat-a-3-meter-titan-v0-uooa05pywd7d1.jpeg?auto=webp&s=db46209834bbd1207e92aae4db4cdc52e0a265ea', tags:['gigante','devora'], desc:'Peligrosos en grupo.'},
+  {name:'Titán 9m (SNK)', slug:'snk-pure-titan', threat:7, cat:'titan', img: 'https://pa1.aminoapps.com/6464/b515106a0e4408d1fa7d7cdacd884d64347caa4f_00.gif', tags:['gigante','devora'], desc:'Te puede devorar de un mordisco.'},
+  {name:'Titán 15m (SNK)', slug:'snk-pure-titan', threat:10, cat:'titan', img: 'https://sm.ign.com/t/ign_latam/screenshot/default/titan-sonriente_pcxy.1280.jpg', tags:['gigante','devora'], desc:'El terror esta ante ti, algo fuera de la comprension, solo quiero saber a que sabes.'},
+  {name:'SCP-106 — El Anciano', slug:'scp-106', threat:9, cat:'scp', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcScSD6KDJLhAsQkHBfmvens4_6cqeBSJl2dZA&s', tags:['dimension','corrosion'],desc:'Adicto a la tortura, no dejes que te atrape.'},
+  {name:'SCP-049 — El Doctor de la Plaga', slug:'scp-049', threat:7, cat:'scp', img:'https://i.pinimg.com/736x/bf/5f/d7/bf5fd7981fdbc62e280baa64199d3ef1.jpg', tags:['plaga','medico'], desc:'El sabe que tienes algo mal, por eso te va a transformar.'},
+  {name:'SCP-847 — El Maniquí', slug:'scp-847', threat:3, cat:'scp', img: 'https://i.redd.it/2t3c6wllsjs71.jpg', tags:['maniqui','psiquis'], desc:'Cuidado'},
+  {name:'SCP-173 — La Estatua', slug:'scp-173', threat:7, cat:'scp', img:'https://img.wattpad.com/d1da15ab1a0657739e7fcead9e83a2651eb98506/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f776174747061642d6d656469612d736572766963652f53746f7279496d6167652f35454350345731454b47417365413d3d2d3932383830353231372e313632366131653764343939643263663333333338373637333739352e6a7067?s=fit&w=720&h=720', tags:['rompecuellos','linea-de-vision'], desc:'no le quites los ojos de encima'},
+  {name:'Sephiroth', slug:'sephiroth', threat:9, cat:'demonio', img:'https://static.wikia.nocookie.net/versus-compendium/images/4/49/Sephiroth_SSBU.png/revision/latest?cb=20210922193959', tags:['villano','espada']},
+  {name:'Drácula (Castlevania)', slug:'dracula-castlevania', threat:9, cat:'demonio', img:'https://i.redd.it/6cj3nivtdlee1.jpeg', tags:['vampiro']},
+  {name:'Herobrine', slug:'herobrine', threat:10, cat:'spectral', img:'https://media.forgecdn.net/avatars/thumbnails/1284/8/256/256/638835127317428233.png', tags:['mistico']},
+  {name:'Piedrero de chepe', slug:'piedrero', threat:5, cat:'humano', img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJqBUPVvmi4yFQADh1_GOhHis38xzY2VAyaQ&s', tags:['rango','impacto','improvisado']},
+  {name:'Godzilla Bloodbath', slug:'godzilla-bloodbath', threat:16, cat:'kaiju', img:IMG['godzilla-bloodbath']},
+  {name:'Colossal Titan', slug:'colossal-titan', threat:16, cat:'titan',img:'https://htdraw.com/wp-content/uploads/2020/05/How-to-draw-Colossal-Titan-from-the-Attack-on-Titan.jpg'},
+  {name:'Slenderman', slug:'slenderman', threat:7, cat:'spectral'},
+  {name:'Xenomorfo Praetorian', slug:'xenomorfo-praetorian', threat:9, cat:'alien'},
+  {name:'Nemesis', slug:'nemesis', threat:9, cat:'bioarma'},
+  {name:'Clicker (TLoU)', slug:'clicker-tlou', threat:4, cat:'infectado'},
+  {name:'Enderman', slug:'enderman', threat:3, cat:'mistico'},
+  {name:'Gremlins', slug:'gremlins', threat:2, cat:'criaturas'},
+  {name:'R.E.P.O. Cabeza flotante', slug:'repo-cabeza', threat:5, cat:'analog'},
+  {name:'Zarigüeya furiosa', slug:'zarigueya-furiosa', threat:9, cat:'animal'},
+  {name:'Boolossus', slug:'boolossus', threat:3, cat:'spectral',img:'https://preview.redd.it/which-boolossus-fight-do-yall-prefer-v0-pitfbc2cgmwb1.jpg?width=480&format=pjpg&auto=webp&s=05724874770732b3f2d1c5cbfc3381d81e51080b'},
+  {name:'Foxy', slug:'foxy', threat:3, cat:'animatronico',img:"https://i.pinimg.com/736x/2d/c7/8b/2dc78b45da95cff460a3cdf6c8cbb994.jpg"},
+  {name:'Hisoka', slug:'hisoka', threat:9, cat:'mago'},
+  {name:'Sukuna', slug:'sukuna', threat:14, cat:'demonio'},
+  {name:'Figure (DOORS)', slug:'doors-figure', threat:5, cat:'roblox'},
+  {name:'Seek (DOORS)', slug:'doors-seek', threat:4, cat:'roblox',img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTu44bCWa-H69L9etthhgXZ_xmleHbDE7TPVQ&s'},
+  {name:'Sama (The Mimic)', slug:'mimic-sama', threat:7, cat:'roblox'},
+  {name:'Blue (Rainbow Friends)', slug:'rainbow-blue', threat:2, cat:'roblox', img:'https://fbi.cults3d.com/uploaders/14159758/illustration-file/dd0c0587-97dd-414d-ad15-ec97ddc2f601/Blue.851.jpg'},
+  {name:'Piggy', slug:'piggy', threat:5, cat:'roblox'},
+  {name:'Intruder (Mandela Catalogue)', slug:'mandela-intruder', threat:8, cat:'analogico',img:'https://static.wikia.nocookie.net/analog-horror-0/images/f/fa/This_is_intruder_from_vol4.png/revision/latest?cb=20240412165500'},
+  {name:'Smiler (Backrooms)', slug:'backrooms-smiler', threat:7, cat:'analogico'},
+  {name:'Bon (Walten Files)', slug:'walten-bon', threat:6, cat:'analogico', img:'https://pbs.twimg.com/media/FkRrMscX0AUkW37.jpg:large'},
+  {name:'Local 58 Broadcast', slug:'local-58', threat:5, cat:'analogico'},
+  {name:'Huggy Wuggy', slug:'huggy-wuggy', threat:6, cat:'poppy'},
+  {name:'Mommy Long Legs', slug:'mommy-long-legs', threat:7, cat:'poppy'},
+  {name:'Ink Demon', slug:'ink-demon', threat:7, cat:'ink'},
+  {name:'Entidad del Nivel 0 (Backrooms)', slug:'backrooms-level0-entity', threat:6, cat:'analogico', img:'https://assets.fragmnt.com/sites/5/2025/06/h4dgpz6cnho.jpg?auto=compress%2Cformat'},
+  {name:'Witch (Left 4 Dead)', slug:'l4d-witch', threat:7, cat:'infectado', img:'https://images.steamusercontent.com/ugc/1653343580028180169/0EF2C8DA02F35AF0E05F5022EE6A6EE7B767992A/?imw=512&imh=508&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=true'}
+].map(e=>({...e,img: e.img ?? (IMG[e.slug]||null)}));
+
+const ITEMS = [
+
+  {name:'Bolsa de Doritos', slug:'doritos', power:2, tags:['comida','snack'], img:'https://storage.googleapis.com/images-prs-prd-c7e7986.prs.prd.v8.commerce.mi9cloud.com/product-images/zoom/00028400516471_1'},
+  {name:'Manzana dorada (Minecraft)', slug:'golden-apple-mc', power:5, tags:['cura','minecraft'], img:'https://minecraft.wiki/images/Golden_Apple_JE2_BE2.png?aa827'},
+  {name:'Manzana de Notch (Minecraft)', slug:'notch-apple', power:9, tags:['cura','minecraft','legendaria'], img:'https://pm1.aminoapps.com/5752/1bb09df88c31d1f0b8da51905108d940b7bd5cfb_hq.jpg'},
+  {name:'Chocolate de Heavy', slug:'heavy-choco', power:4, tags:['cura','tf2'], img:'https://wiki.teamfortress.com/w/images/thumb/8/85/RED_Dalokohs_Bar.png/250px-RED_Dalokohs_Bar.png'},
+  {name:'Planta de curación (Resident Evil)', slug:'herb-re', power:2, tags:['cura','planta'], img:'https://assetsio.gnwcdn.com/resident-evil-7-tambien-tendra-hierbas-curativas-1470671667770.jpg?width=1200&height=1200&fit=crop&quality=100&format=png&enable=upscale&auto=webp'},
+  {name:'Cadena Vampire Killer', slug:'vampire-killer', power:3, tags:['rango','sagrado','corte'], img:'https://preview.redd.it/vampire-killer-leather-or-chain-whip-v0-fbk8q8u20dba1.jpg?width=2000&format=pjpg&auto=webp&s=dbbd814425ed87fa6dada0e2ed14fb74021b9012'},
+  {name:'Masamune (Sephiroth)', slug:'masamune-sephiroth', power:6, tags:['corte','melee'], img:'https://static0.srcdn.com/wordpress/wp-content/uploads/2021/02/Final-Fantasy-7-Remake-Sephiroth-Sword-Masamune.jpg'},
+  {name:'Terra Blade', slug:'terra-blade', power:10, tags:['corte','rango','luz'], img:'https://media.forgecdn.net/avatars/thumbnails/440/23/256/256/637687981147709570.png'},
+  {name:'Master Sword', slug:'master-sword', power:5, tags:['sagrado','corte','melee'], img:IMG['master-sword']},
+  {name:'Espada de Zora', slug:'espada-de-zora', power:4, tags:['corte','melee'], img:IMG['espada-de-zora']},
+  {name:'Hylian Shield', slug:'hylian-shield', power:3, tags:['defensa'], img:IMG['hylian-shield']},
+  {name:'Portal Gun', slug:'portal-gun', power:6, tags:['movilidad','rango','trampas'], img:'https://farm5.static.flickr.com/4089/5198422399_991fd741a7_z.jpg'},
+  {name:'Linterna recargable', slug:'linterna-recargable', power:1, tags:['luz'], img:IMG['linterna-recargable']},
+  {name:'Sandvich infinito', slug:'sandvich-infinito', power:1, bonus:8, tags:['curacion','humor'], img:'https://i.redd.it/9a1t59u3z3qc1.png'},
+  {name:'Banana infinita', slug:'banana-infinita', power:4, tags:['humor','distraccion'], img:IMG['banana-infinita']},
+  {name:'Pala de diamante', slug:'pala-de-diamante', power:2, tags:['corte','melee'], img:IMG['pala-de-diamante']},
+  {name:'Crowbar', slug:'crowbar', power:5, tags:['melee'], img:IMG['crowbar']},
+  {name:'Espada galáctica', slug:'espada-galactica', power:5, tags:['corte','melee'], img:'https://cdn.custom-cursor.com/packs/10139/games-stardew-valley-infinity-blade-stardrop-pack.png'},
+  {name:'Regadera de iridio', slug:'regadera-de-iridio', power:1, tags:['agua','herramienta'], img: 'https://cdn.alfabetajuega.com/alfabetajuega/2021/02/stardew-valley-aspersores.jpg'},
+  {name:'Escudo del Héroe', slug:'escudo-del-heroe', power:8, tags:['defensa','sagrado'], img:IMG['escudo-del-heroe']},
+  {name:'Guante repulsor (Iron Man)', slug:'guante-repulsor', power:5, tags:['energia','rango','tecnologia'], img:'https://i.etsystatic.com/37908182/c/1080/1080/0/13/il/2d1b67/4714526579/il_300x300.4714526579_ms9y.jpg'},
+  {name:'Zarigüeya de peluche', slug:'peluche-zarigueya', power:1, tags:['humor','distraccion'], img:IMG['zarigueya-furiosa']},
+  {name:'Flechipollas', slug:'flechipollas', power:4, tags:['rango','humor'], img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTaFJQP0UovevtgiTDBigJp9VtLsmzhMBOtX2dEUJKjLqwo2BhJzy7EfAHfYbSwo5NXmbg&usqp=CAU'},
+  {name:'Escopeta', slug:'escopeta', power:5, tags:['rango','ruido','impacto'], img:'https://www.gamemodd.com/uploads/posts/2018-11/1541614236_1.jpg'},
+  {name:'Pistola', slug:'pistola', power:3, tags:['rango','impacto'], img:'https://cdnx.jumpseller.com/armeria-magnum/image/42818959/IMG_3469.jpeg?1701292665'},
+  {name:'Cuchillo', slug:'cuchillo', power:2, tags:['melee','corte','sigilo'], img:'https://i5.walmartimages.com/asr/38b2eb42-4823-42c7-bd8d-1adeb23674a4.9f9d32e61723be6cb1d861f76c10d2eb.png?odnHeight=612&odnWidth=612&odnBg=FFFFFF'},
+  {name:'Tenedor', slug:'tenedor', power:1, tags:['melee','improvisado','corte'], img:'https://tipscr.com/38915-home_default/tenedor-de-nylon-de-12-pulgadas-de-color-negro-thunder-plpp008bk.jpg'},
+  {name:'Mazo de Kirby', slug:'kirby-hammer', power:4, tags:['impacto','melee','humor'], img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWcD9w21iNANuCIVfKcHODub934W1v-w8Pmw&s'}
+];
+
+const ABILITIES = [
+  {name:'Chidori', slug:'chidori', power:6, tags:['electrico','melee','energia'], img:'https://wallpapers.com/images/featured/chidori-ayaj0avuwv8wfgax.jpg'},
+  {name:'Rasengan', slug:'rasengan', power:7, tags:['energia','impacto'],img: 'https://comicbook.com/wp-content/uploads/sites/4/2023/07/bd3c6185-1453-4066-972d-1e5facbc36f6.png'},
+  {name:'Espacio Infinito', slug:'espacio-infinito', power:8, tags:['control','luz'], img:'https://static.wikia.nocookie.net/jujutsu-kaisen/images/b/ba/Episodio_07_-_210.jpg/revision/latest?cb=20201126155337&path-prefix=es'},
+  {name:'La Fuerza', slug:'la-fuerza', power:8, tags:['telequinesis','luz','rango'], img: 'https://img.europapress.es/fotoweb/fotonoticia_20230626145247_690.jpg'},
+  {name:'Invisibilidad', slug:'invisibilidad', power:4, tags:['sigilo'], img:'https://st1.uvnimg.com/e4/49/ab6d211044c0c3af04747dfc5fbf/invisibilidad-ciencia.jpg' },
+  {name:'Haki de Observación', slug:'haki-observacion', power:5, tags:['percepcion'], img:'https://preview.redd.it/observation-haki-v0-jkvot8medelc1.jpeg?auto=webp&s=f350a56ad7077caafb5768accf1bc8d067eff407'},
+  {name:'Dash/Teletransporte corto', slug:'dash', power:4, tags:['movilidad'], img:'https://lol.dyn.riotcdn.net/x/videos/champion-abilities/0039/ability_0039_Q1.jpg'},
+  {name:'Respiración del Agua', slug:'respiracion-del-agua', power:5, tags:['espada','luz'], img:'https://i0.wp.com/codigoespagueti.com/wp-content/uploads/2024/05/imagen_2024-05-03_163203948.jpg?resize=1280%2C720&ssl=1'},
+  {name:'Nen: Emisión', slug:'nen-emision', power:6, tags:['energia','rango'], img: 'https://static.wikia.nocookie.net/hunterxhunter/images/7/7e/Nen_2011.png/revision/latest?cb=20140821175647&path-prefix=es'},
+  {name:'One For All', slug:'one-for-all', power:9, tags:['potenciacion','herencia'], img:'https://a.storyblok.com/f/178900/960x540/53c89c8333/my-hero-academia-quiz-one-for-all-quirk-percentage.jpg/m/filters:quality(95)format(webp)'},
+  {name:'All For One (habilidad)', slug:'all-for-one-hab', power:9, tags:['robo-habilidades'],img:'https://static.wikia.nocookie.net/bokunoheroacademia/images/a/a5/All_For_One_using_multiple_Quirks.png/revision/latest?cb=20201111093919'},
+  {name:'Frío y Caliente', slug:'frio-y-caliente', power:6, tags:['hielo','fuego'], img:'https://preview.redd.it/day-3-what-is-your-favorite-headcannons-about-shoto-todoroki-v0-63twa05tdhjd1.jpg?width=640&crop=smart&auto=webp&s=d2664d01caf7c1e166f4fd163720af3b1060bd04'},
+  {name:'El que te reviento', slug:'el-que-te-reviento', power:6, tags:['impacto','humor','melee'], img:'https://i.ytimg.com/vi/DcGG1yyT7qE/mqdefault.jpg'},
+  {name:'Rey de las Explosiones', slug:'rey-explosiones', power:6, tags:['explosion','impacto','area'], img:'https://i.ytimg.com/vi/aBooUlG_91U/maxresdefault.jpg'},
+  {name:'Invocación de Criaturas', slug:'invocacion-criaturas', power:8, tags:['invocador','control'], img: 'https://pm1.aminoapps.com/8831/3bd2c5483cb89e14a42d8200405c7832cb84a68cr1-385-846v2_hq.jpg' }
+];
+
+const ALLIES = [
+  // --- perros (mascotas)
+  {name:'Golden Retriever', slug:'golden-retriever', power:4, tags:['mascota','suerte','companion'], img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIhg8PdUmLPZjh_X9Os-NiyCaPUsQH_K5_9Q&s', desc:'Buen olfato y ánimo del equipo.'},
+  {name:'Labrador', slug:'labrador-retriever', power:4, tags:['mascota','suerte','companion'], img:'https://i.redd.it/hu09cjrm7bbb1.jpg', desc:'Fiel, resistente y atento.'},
+  {name:'Akita Inu', slug:'akita-inu', power:4, tags:['mascota','guardia','companion'], img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcXE0y1XhD0T0KmlIR6YXmwJ93IBboE3MP5sLtqBVONkU1x963SyG0oBVTMEb1Gd0lM8k&usqp=CAU', desc:'Lealtad legendaria.'},
+  {name:'Husky', slug:'siberian-husky', power:3, tags:['mascota','movilidad','companion'], img:'https://i.pinimg.com/736x/ac/08/10/ac081065097fc09c4a2f5aa3432b65b0.jpg', desc:'Resistencia y aullido motivador.'},
+  {name:'Zaguate (Caramelo)', slug:'zaguate-caramelo', power:3, tags:['mascota','suerte','companion'], img:'https://www.pedigree.com.br/sites/g/files/fnmzdf2401/files/2024-12/vira-lata-caramelo-03.jpg', desc:'Vira-lata “caramelo”: suerte pura.'},
+
+  // --- Naruto
+  {name:'Kakashi Hatake', slug:'kakashi-hatake', power:6, tags:['ninja','electrico','melee','tactica'], img:'https://i.redd.it/ay2vtitocs9b1.jpg', desc:'El “copión”. Chidori y cerebro frío.'},
+
+  {name:'Kirby', slug:'kirby', power:7, tags:['copiar','versatil','melee','humor'], img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZVWnGfsiOi5nHkNv26KCPQZadz0Y2PpnMDQ&s'},
+  {name:'Mr. Game & Watch', slug:'mr-game-and-watch', power:5, tags:['versatil','humor'], img: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/cb/Mr._Game_%26_Watch_SSBU.png/250px-Mr._Game_%26_Watch_SSBU.png'},
+  {name:'Cloud Strife', slug:'cloud-strife', power:6, tags:['corte','melee'], img:'https://assets-prd.ignimgs.com/2024/02/22/cloud-1708639433107.png'},
+  {name:'Simon Belmont', slug:'simon-belmont', power:5, tags:['sagrado','rango'], img:'https://static.wikia.nocookie.net/ssb/images/8/8b/Simon_-_Super_Smash_Bros._Ultimate.png/revision/latest/scale-to-width-down/1200?cb=20220219175437'},
+  {name:'Richter Belmont', slug:'richter-belmont', power:5, tags:['sagrado','rango'], img: 'https://ssb.wiki.gallery/images/5/5f/Richter_Belmont_HoD.png'},
+  {name:'Steve', slug:'steve-minecraft', power:6, tags:['herramienta','melee','construccion'], img: 'https://upload.wikimedia.org/wikipedia/commons/b/b6/Steve%3F_2.png'},
+  {name:'Shiba Inu', slug:'shiba-inu', power:2, tags:['mascota','suerte'], img:'https://media.tenor.com/YHGmyXRaL3YAAAAe/smiling-dog.png'},
+  {name:'Garen', slug:'garen', power:6, tags:['tanque','demacia'], img:'https://statics.koreanbuilds.net/tile_200x200/Garen.webp'},
+  {name:'Lux', slug:'lux', power:6, tags:['luz','magia','demacia'], img:IMG['lux']},
+  {name:'Soraka', slug:'soraka', power:2, bonus:10, tags:['curacion'], img:IMG['soraka']},
+  {name:'Braum', slug:'braum', power:6, tags:['escudo'], img:IMG['braum']},
+  {name:'Kayle', slug:'kayle', power:8, tags:['sagrado','daño'], img:IMG['kayle']},
+  {name:'Gon Freecss', slug:'gon-freecss', power:4, tags:['melee','aura'], img:'https://static.wikitide.net/deathbattlewiki/e/e6/Portrait.gonfreecss.png'},
+  {name:'Killua Zoldyck', slug:'killua-zoldyck', power:5, tags:['electrico','velocidad'], img:'https://i.pinimg.com/736x/3e/6c/0d/3e6c0dbd7e2c149ff4b0596b9b23f56a.jpg'},
+  {name:'Gojo Satoru', slug:'gojo-satoru', power:9, tags:['luz','control','sagrado'], img:'https://cdn.rafled.com/anime-icons/images/0b66104c69bef98e0cc89be5ab10e45955b66c7e9c3de70c2961b811b97345e2.jpg'},
+  {name:'Iron Man', slug:'iron-man', power:6, tags:['tecnologia','rango','energia'], img:'https://static.wikia.nocookie.net/disney/images/9/96/Iron-Man-AOU-Render.png/revision/latest?cb=20180410032118&path-prefix=es'},
+  {name:'Tanjiro Kamado', slug:'tanjiro', power:6, tags:['respiracion','luz'], img:'https://upload.wikimedia.org/wikipedia/en/e/ea/Tanjirou_manga.png'},
+  {name:'Izuku Midoriya (Deku)', slug:'deku', power:7, tags:['one-for-all','heroe'], img:IMG['deku']},
+  {name:'Ochaco Uraraka', slug:'uraraka', power:4, tags:['gravedad','heroe'], img:IMG['uraraka']},
+  {name:'Shoto Todoroki', slug:'todoroki', power:6, tags:['frio-y-caliente','heroe'], img:IMG['todoroki']},
+  {name:'Katsuki Bakugo', slug:'bakugo', power:6, tags:['explosion','heroe'], img:IMG['bakugo']},
+  {name:'Corny (CR)', slug:'corny-cr', power:3, tags:['humor','cr'], img:IMG['corny-cr']},
+  {name:'Spreen', slug:'spreen', power:2, tags:['agilidad','stream'], img:IMG['spreen']},
+  {name:'Germán Garmendia', slug:'german-garmendia', power:6, tags:['influencer'], img:IMG['german-garmendia']},
+  {name:'Mimi (perro de Germán)', slug:'mimi-perro', power:2, tags:['mascota','suerte'], img:IMG['mimi-perro']},
+  {name:'Mauu', slug:'mauu', power:1, tags:['humor'], img:IMG['mauu']},
+  {name:'Fargan', slug:'fargan', power:4, tags:['estratega'], img:IMG['fargan']},
+  {name:'Alexby', slug:'alexby', power:3, tags:['sigilo'], img:IMG['alexby']},
+  {name:'Rubius', slug:'rubius', power:6, tags:['influencer','distraccion'], img:IMG['rubius']},
+  {name:'Fernanfloo', slug:'fernanfloo', power:5, tags:['agilidad','humor'], img:IMG['fernanfloo']},
+  {name:'Vegetta777', slug:'vegetta777', power:7, tags:['liderazgo'], img:IMG['vegetta777']},
+  {name:'Willyrex', slug:'willyrex', power:5, tags:['estratega'], img:IMG['willyrex']},
+  {name:'Xocas', slug:'xocas', power:3, tags:['berzerk','motivacion'], img:IMG['xocas']},
+  {name:'Ibai', slug:'ibai', power:3, tags:['lider','anfitrion'], img:IMG['ibai']},
+  {name:'IlloJuan', slug:'illojuan', power:3, tags:['humor','pilleria'], img:IMG['illojuan']},
+  {name:'Auron', slug:'auron', power:4, tags:['sigilo','tactica'], img:IMG['auron']},
+  {name:'Diego Garro', slug:'diego-garro', power:4, tags:['animo','stream'], img:IMG['diego-garro']},
+  {name:'Frijol (perro)', slug:'frijol-perro', power:3, tags:['mascota','suerte'], img:IMG['frijol-perro']},
+  {name:'Wilson (gato)', slug:'wilson-gato', power:4, tags:['mascota','suerte'], img:IMG['wilson-gato']},
+  {name:'Vicente (caballo)', slug:'vicente-caballo', power:4, tags:['montura','movilidad'], img:IMG['vicente-caballo']},
+  {name:'Trotuman', slug:'trotuman', power:2, tags:['montura','humor'], img:IMG['trotuman']},
+  {name:'Curly (perro)', slug:'curly-perro', power:2, tags:['mascota','animo'], img:IMG['curly-perro']},
+  {name:'Nugget', slug:'nugget', power:6, tags:['misterio','humor'], img:'https://i.imgur.com/D0iT1WA.jpeg'},
+  {name:'Baki Hanma', slug:'baki', power:7, tags:['lucha','baki'], img:'https://m.media-amazon.com/images/M/MV5BNWM2MWQ4OWEtMDY5ZS00ODcyLWE4YjQtZDQ3Y2JhYTI4MzNjXkEyXkFqcGdeQVRoaXJkUGFydHlJbmdlc3Rpb25Xb3JrZmxvdw@@._V1_QL75_UY281_CR0,0,500,281_.jpg'},
+  {name:'Retsu Kaioh', slug:'retsu', power:4, tags:['lucha','baki','kungfu'], img:'https://static.wikia.nocookie.net/doblaje/images/5/5e/Kaioh_Retsu_%28BH%29.png/revision/latest?cb=20240513170210&path-prefix=es'}
+];
+
+const EVENTS = [
+  {name:'Refugio improvisado', slug:'refugio', effect:+2, type:'good'},
+  {name:'Tormenta/blackout', slug:'tormenta', effect:-3, type:'bad'},
+  {name:'¡Suerte crítica!', slug:'suerte-critica', effect:+4, type:'good'},
+  {name:'Te lastimaste', slug:'lesion', effect:-2, type:'bad'}
+];
+
+const BOSSES = [
+
+  {name:'Loki pandillero', slug:'loki-cat', bossPower:100, cat:'felino', img:'https://i.imgur.com/PhVlUtr.jpeg'},
+  {name:'Giganotosaurio', slug:'giganoto', bossPower:50, cat:'dino', img:'https://i.ytimg.com/vi/hcUXDYzG3s0/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLD1V53oV4LYtrv8WMzrzJ9xF6k0mg'},
+  {name:'Yujiro Hanma', slug:'yujiro', bossPower:78, cat:'baki', img:'https://static.wikia.nocookie.net/doblaje/images/2/25/Y%C5%ABjir%C5%8D_Hanma.png/revision/latest?cb=20240506040755&path-prefix=es'},
+  {name:'Pickle (Baki)', slug:'pickle', bossPower:65, cat:'baki', img:'https://cbub.comicbookuniversebattles.com/static/images/cbub/cbub_contender_image/2/13042/13042.png'},
+  {name:'SCP-682 — Reptil Difícil de Destruir', slug:'scp-682', bossPower:120, cat:'scp', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTb3oQNVO_GDA_UryIvkW8LNp86abCpfshSWJAWlJVR7W3YWoziOlplYGjm7sUvqK1p8i8&usqp=CAU', tags:['keter','bestia']},
+  {name:'SCP-2317 — Devorador de Mundos', slug:'scp-2317', bossPower:88, cat:'scp', img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS18ftsrki1gXXLqZZpuhkyoLG_MEGaoiUmpjYhuC-cxXfnxpBrhMkQNo48NV4xCug-NOI&usqp=CAU'},
+  {name:'Baron Nashor', slug:'baron-nashor', bossPower:62, cat:'monstruo', img:'https://static.wikia.nocookie.net/leagueoflegends/images/1/11/99NU002-full.png/revision/latest?cb=20200919181345'},
+  {name:'Pyramid Head', slug:'pyramid-head', bossPower:49, cat:'spectral', img:'https://cdna.artstation.com/p/assets/images/images/081/492/702/large/bulkamancer-sculpts-pyramid-hex-color-1.jpg?1730398402'},
+  {name:'Moon Lord', slug:'moon-lord', bossPower:80, cat:'cosmic', img:'https://i.imgur.com/9EtAv7u.png'},
+  {name:'Skeletron Prime', slug:'skeletron-prime', bossPower:58, cat:'maquina', img:'https://infernummod.wiki.gg/images/SkeletronPrimeFull.gif?42a364'},
+  {name:'The Twins', slug:'the-twins', bossPower:56, cat:'maquina', img:'https://images.steamusercontent.com/ugc/939465706357213058/495ED9FEC8DB691DCE0D51C44C677F8DE526258B/?imw=1024&imh=576&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=true'},
+  {name:'Plantera', slug:'plantera', bossPower:60, cat:'bestia', img:'https://38.media.tumblr.com/9541d87288cdffcb775f018227cae24e/tumblr_n7lcn1fcsl1sdqpmho1_1280.png'},
+  {name:'Aatrox', slug:'aatrox', bossPower:66, cat:'demonio', img:IMG['aatrox']},
+  {name:'Muzan Kibutsuji', slug:'muzan-kibutsuji', bossPower:64, cat:'demonio', img:"https://www.dexerto.com/cdn-image/wp-content/uploads/2023/05/15/Demon-Slayer-Muzan-Kibutsuji.jpeg?width=1200&quality=60&format=auto"},
+  {name:'Cthulhu', slug:'cthulhu', bossPower:82, cat:'eldritch', img:'https://i0.wp.com/slickdungeon.blog/wp-content/uploads/2021/10/cthulhu.png?fit=675%2C380&ssl=1'},
+  {name:'Meruem', slug:'meruem', bossPower:50, cat:'rey-hormiga', img:'https://static0.cbrimages.com/wordpress/wp-content/uploads/2019/12/Meruem-Specialist-Featured.jpg'},
+  {name:'All For One', slug:'all-for-one', bossPower:75, cat:'bnha', img:'https://comicbook.com/wp-content/uploads/sites/4/2021/10/cab40e4b-1197-4702-a958-5e667603d981.jpg '},
+  {name:'Spinosaurio (JP3)', slug:'spinosaurus-jp3', bossPower:65, cat:'dinosaurio', img:'https://i.pinimg.com/736x/98/e5/73/98e573e961b8ed7fc5a919862a75ff34.jpg'},
+  {name:'Zarigüeya MUY enojada (Jefe supremo)', slug:'zarigueya-muy-enojada', bossPower:100, cat:'animal', img:"https://i.ytimg.com/vi/5ewrz19FQHg/hqdefault.jpg?sqp=-oaymwEmCOADEOgC8quKqQMa8AEB-AHUBoAC4AOKAgwIABABGGUgZShlMA8=&rs=AOn4CLCIRhFL5kx3amZ_m5xTkNOTjtCzhA"},
+  {name:'Armored Titan (Reiner)', slug:'armored-titan-reiner', bossPower:70, cat:'titan', img: 'https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/11/armored-titan-reiner-braun-attack-on-titan-featured.jpg?w=1600&h=900&fit=crop'},
+  {name:'Vaquipandi', slug:'vaquipandi', bossPower:50, cat:'animal', img:'https://i.ytimg.com/vi/hti9Knxn60I/maxresdefault.jpg'}
+
+];
+
+// ---------- Sinergias & penalizaciones
+const SYNERGIES = [
+  {needs:'spectral', withTag:'sagrado', bonus:12},
+  {needs:'spectral', withTag:'luz', bonus:8},
+  {needs:'demonio', withTag:'sagrado', bonus:15},
+  {needs:'maquina', withTag:'energia', bonus:6},
+  {needs:'maquina', withTag:'electrico', bonus:6},
+  {needs:'maquina', withTag:'rango', bonus:4},
+  {needs:'kaiju', withTag:'movilidad', bonus:8},
+  {needs:'kaiju', withTag:'rango', bonus:6},
+  {needs:'eldritch', withTag:'luz', bonus:4},
+  {needs:'cualquiera', withTag:'curacion', bonus:10},
+  {needs:'cualquiera', withTag:'humor', bonus:3}
+];
+const PENALTIES = [
+  {needs:'kaiju', withTag:'melee', mult:0.5},
+  {needs:'maquina', withTag:'corte', mult:0.7}
+];
+
+
+// ---------- Estado
+const state = {
+  seed: Math.floor(Math.random()*1e9), rng: null,
+  round: 0, totalRounds: 20, baseSurv: 70,
+  loc:null, enemies:[], items:[], allies:[], skills:[], danger:0, log:[], bosses:[],
+  used: new Set(),
+  offered: new Set(),
+  groupCounts: {aliado:{}}
+};
+
+state.storyBattles = [];
+state.storyStats = {};
+
+// ---------- Preferencias/evitaciones por tag de mapa (variedad por mapa)
+const MAP_PREFS = {
+  'urbano':     {prefer:['tecnologia','sigilo','rango','energia','percepcion'], avoid:['montura','mascota','humor']},
+  'animatronico':{prefer:['energia','rango','tecnologia','luz'],                 avoid:['mascota','humor']},
+  'liminal':    {prefer:['luz','sagrado','percepcion','control'],                avoid:['humor']},
+  'analogico':  {prefer:['luz','sagrado','percepcion','control'],                avoid:['humor']},
+  'dinosaurios':{prefer:['movilidad','rango','montura'],                         avoid:['melee','humor']},
+  'calor':      {prefer:['agua','movilidad'],                                    avoid:['hielo']},
+  'arena':      {prefer:['movilidad','montura'],                                 avoid:[]},
+  'oscuro':     {prefer:['luz','percepcion'],                                    avoid:[]},
+  'virus':      {prefer:['curacion','energia','rango'],                          avoid:[]},
+  'maquinas':   {prefer:['energia','electrico','rango'],                         avoid:['corte']},
+  'corporativo':{prefer:['sigilo','tecnologia'],                                 avoid:[]},
+  'niebla':     {prefer:['percepcion','luz'],                                    avoid:[]}
+};
+
+function allMapPrefs(){
+  const prefs = {prefer:new Set(), avoid:new Set()};
+  if(!state.loc) return prefs;
+  (state.loc.tags||[]).forEach(t=>{
+    const p = MAP_PREFS[t]; if(!p) return;
+    p.prefer.forEach(x=>prefs.prefer.add(x));
+    p.avoid.forEach(x=>prefs.avoid.add(x));
+  });
+  return prefs;
+}
+
+function allyGroup(a){
+  const t=a.tags||[];
+  if(t.includes('mascota')) return 'mascota';
+  if(t.includes('influencer')||t.includes('stream')||t.includes('cr')) return 'creador';
+  return 'combat';
+}
+
+
+function start(seed){
+  state.seed = seed ?? state.seed; state.rng = seededRNG(state.seed);
+  state.round=0; state.loc=null; state.enemies=[]; state.items=[]; state.allies=[]; state.skills=[]; state.danger=0; state.log=[]; state.bosses=[];
+  state.used.clear(); state.offered.clear(); state.groupCounts={aliado:{}};
+  qs('#seedLabel').textContent = state.seed;
+  // Preludio: elegir mapa
+  qs('#prog').style.width = '0%';
+  qs('#roundTitle').textContent = 'Preludio: Elige el mapa (no cuenta)';
+  const opts = sampleWeighted(LOCATIONS, LOCATIONS.map(()=>1), 2, state.rng);
+  renderChoices(opts, 'lugar');
+}
+
+function nextRound(){
+  // Si aún no hay mapa elegido, esperamos a que lo elijan en el preludio
+  if(!state.loc){ return; }
+
+  state.round++;
+  const plan = ROUNDS_PLAN[state.round-1]; if(!plan){ return endGame(); }
+  qs('#prog').style.width = ((state.round-1)/state.totalRounds*100)+'%';
+  qs('#roundTitle').textContent = `${plan.title} — (${state.round}/${state.totalRounds})`;
+
+  let source=[]; if(plan.type==='enemigo') source=ENEMIES; if(plan.type==='objeto') source=ITEMS; if(plan.type==='aliado') source=ALLIES; if(plan.type==='habilidad') source=ABILITIES; if(plan.type==='jefe') source=BOSSES;
+
+  // no repetir opciones en la misma run
+  let pool = source.filter(x=>!state.used.has(x.slug) && !state.offered.has(x.slug));
+  if(pool.length<2) pool = source.filter(x=>!state.used.has(x.slug));
+
+  const {prefer,avoid} = allMapPrefs();
+
+  // pesos contextuales por mapa + diversidad de aliados
+  const weights = pool.map(x=>{
+    let w=1;
+    const tags = x.tags||[];
+    // prefer/avoid por mapa
+    if(tags.some(t=>prefer.has(t))) w *= 1.8;
+    if(tags.some(t=>avoid.has(t)))  w *= 0.6;
+    // variedad de aliados por grupo
+    if(plan.type==='aliado'){
+      const g = allyGroup(x);
+      const count = (state.groupCounts.aliado[g]||0);
+      w *= 1/(1+0.9*count); // si ya tenemos muchos del grupo, baja el peso
+    }
+    // pequeño boost si el tipo encaja con la amenaza del mapa
+    if(plan.type==='enemigo' && state.loc.tags.includes('dinosaurios') && x.cat==='criaturas') w*=1.2;
+    return Math.max(0.2, w);
+  });
+
+  const opts = sampleWeighted(pool, weights, 2, state.rng);
+  // marcar como ofrecidos para no repetirse como opción
+  opts.forEach(o=>state.offered.add(o.slug));
+  renderChoices(opts, plan.type);
+}
+
+function getImg(x, type){ return x.img || IMG[x.slug] || makeBadge(type); }
+
+function renderChoices(opts, type){
+  const ctn = qs('#choices'); ctn.innerHTML='';
+  opts.forEach((o)=>{
+    const card = document.createElement('div'); card.className='card';
+    const img = getImg(o,type);
+    const tagText = (o.tags? o.tags.slice(0,3).join(', ') : (o.cat||'')).toString();
+    card.innerHTML = `
+      <span class="pill">${type.toUpperCase()}</span>
+      <div class="thumb"><img src="${img}" alt="${o.name}" onerror="this.onerror=null; this.src='${makeBadge(type)}'"></div>
+      <div class="choice">
+        <h4>${o.name}</h4>
+        <p class="muted">${tagText?('tags: '+tagText):''}</p>
+        <button class="btn" style="margin-top:8px;width:100%" onclick="applyChoice('${type}','${o.slug}')">Elegir</button>
+      </div>`;
+    ctn.appendChild(card);
+  });
+  ctn.dataset.type=type; ctn.dataset.opts = JSON.stringify(opts);
+}
+
+function applyChoice(type, slugSel){
+  const opts = JSON.parse(qs('#choices').dataset.opts); const choice = opts.find(o=>o.slug===slugSel) || opts[0];
+
+  if(type==='lugar'){
+    state.loc=choice; state.danger += choice.hazard;
+    addLog(`Mapa: <b>${choice.name}</b> → <i>peligro base +${choice.hazard}</i>.`);
+    refreshHUD();
+    return nextRound();
+  }
+
+  state.used.add(choice.slug);
+
+  if(type==='enemigo'){ state.enemies.push(choice); state.danger += choice.threat; addLog(`Enemigo: <b>${choice.name}</b> → <i>amenaza +${choice.threat}</i>.`, 'bad'); }
+  if(type==='objeto'){ state.items.push(choice); addLog(`Objeto: <b>${choice.name}</b> → <i>poder +${choice.power}${choice.bonus?`, bonus +${choice.bonus}`:''}</i>.`, 'good'); }
+  if(type==='habilidad'){ state.skills.push(choice); addLog(`Habilidad: <b>${choice.name}</b> aprendida → <i>poder +${choice.power}</i>.`, 'good'); }
+  if(type==='aliado'){
+    state.allies.push(choice);
+    const g = allyGroup(choice); state.groupCounts.aliado[g]=(state.groupCounts.aliado[g]||0)+1;
+    addLog(`Aliado: <b>${choice.name}</b> → <i>poder +${choice.power}${choice.bonus?`, bonus +${choice.bonus}`:''}</i>.`, 'good');
+  }
+  if(type==='jefe'){ state.bosses.push(choice); const res = resolveBoss(choice); addLog(res.text, res.ok? 'good':'bad'); }
+
+  refreshHUD();
+  if(state.round >= state.totalRounds){ endGame(); } else { nextRound(); }
+}
+
+function baseTeamPower(){
+  let p=0;
+  for(const it of state.items){ p += (it.power||0); if(it.bonus) p += Math.max(0, it.bonus); }
+  for(const al of state.allies){ p += (al.power||0); if(al.bonus) p += Math.max(0, al.bonus); }
+  for(const sk of state.skills){ p += (sk.power||0); }
+  return p;
+}
+
+function effectivePowerVs(boss){
+  let power = baseTeamPower();
+  const stuff = [...state.items, ...state.allies, ...state.skills];
+  for(const syn of SYNERGIES){
+    if(syn.needs==='cualquiera' || boss.cat===syn.needs){
+      const has = stuff.some(x=> (x.tags||[]).includes(syn.withTag));
+      if(has) power += syn.bonus;
+    }
+  }
+  for(const pen of PENALTIES){
+    if(boss.cat===pen.needs){
+      const has = stuff.some(x=> (x.tags||[]).includes(pen.withTag));
+      if(has) power *= pen.mult;
+    }
+  }
+  return Math.max(0, Math.round(power));
+}
+
+function resolveBoss(boss){
+  const team = effectivePowerVs(boss); const need = boss.bossPower; const ok = team >= need;
+  if(ok){ state.items.push({name:`Victoria vs ${boss.name}`, slug:`win-${boss.slug}`, power:4, bonus:8}); }
+  else  { state.items.push({name:`Derrota ante ${boss.name}`, slug:`lose-${boss.slug}`, power:0, bonus:-12}); }
+  return {ok, text:`Jefe <b>${boss.name}</b>: poder equipo <b>${team}</b> / requerido <b>${need}</b> → ${ok? 'GANASTE' : 'PERDISTE'}`};
+}
+
+function endGame(){
+  qs('#choices').innerHTML=''; qs('#end').style.display='grid';
+  const blocks=[]; if(state.loc){ blocks.push({name:state.loc.name, img:getImg(state.loc,'lugar'), tag:'Escenario'}); }
+  state.enemies.forEach(e=>blocks.push({name:e.name,img:getImg(e,'enemigo'),tag:'Enemigo'}));
+  state.items.forEach(o=>{ if(!String(o.name).startsWith('Evento') && !String(o.name).startsWith('Victoria') && !String(o.name).startsWith('Derrota')) blocks.push({name:o.name,img:getImg(o,'objeto'),tag:'Objeto'}); });
+  state.skills.forEach(s=>blocks.push({name:s.name,img:getImg(s,'habilidad'),tag:'Habilidad'}));
+  state.allies.forEach(a=>blocks.push({name:a.name,img:getImg(a,'aliado'),tag:'Aliado'}));
+  state.bosses.forEach(b=>blocks.push({name:b.name,img:getImg(b,'jefe'),tag:'Jefe'}));
+  const sum = qs('#summary'); sum.innerHTML = blocks.map(b=>`
+    <div class="sum-card">
+      <div class="thumb"><img src="${b.img}" alt="${b.name}" onerror="this.onerror=null; this.src='${makeBadge('lugar')}'"></div>
+      <h5>${b.name}</h5><p class="mini">${b.tag}</p>
+    </div>`).join('');
+
+  // cálculo final (más exigente por nerfs/buffs)
+  let team = baseTeamPower();
+  const bonusWins=state.items.filter(x=>String(x.name).startsWith('Victoria')).length*12;
+  const malusLoss=state.items.filter(x=>String(x.name).startsWith('Derrota')).length*25;
+  let pct = state.baseSurv + (team - state.danger) + bonusWins - malusLoss;
+  pct = Math.max(1, Math.min(93, Math.round(pct)));
+  qs('#finalPct').textContent = pct + '%'; qs('#finalBar').style.width = pct + '%';
+  qs('#finalBar').style.background = pct>=60? 'linear-gradient(90deg,#00d3a7,#46d369)': 'linear-gradient(90deg,#ff4d6d,#ff8aa1)';
+  qs('#finalTxt').innerHTML = pct>=60 ? 'Con tu equipo y decisiones, es <b>probable</b> que sobrevivas. 💪' : 'La historia pinta <b>muy peligrosa</b>… quizá otra build te salve. 😬';
+}
+
+function addLog(html, kind){ const li=document.createElement('li'); li.innerHTML=html; if(kind==='bad') li.classList.add('bad'); if(kind==='good') li.classList.add('good'); qs('#log').appendChild(li); qs('#log').scrollTop = qs('#log').scrollHeight; }
+function refreshHUD(){ qs('#poder').textContent = baseTeamPower(); qs('#peligro').textContent = state.danger; qs('#nObj').textContent = state.items.filter(x=>!(String(x.name).startsWith('Evento'))).length; qs('#nAl').textContent = state.allies.length; qs('#nHab').textContent = state.skills.length; }
+function share(){ const build = {seed: state.seed, loc: state.loc?.name, enemies: state.enemies.map(e=>e.name), items: state.items.map(o=>o.name), allies: state.allies.map(a=>a.name), skills: state.skills.map(s=>s.name), bosses: state.bosses.map(b=>b.name)}; const txt = `Historia 50/50 — semilla ${state.seed}\n`+JSON.stringify(build,null,2); navigator.clipboard.writeText(txt).then(()=>{ alert('Copiado al portapapeles ✅'); }); }
+
+// ------- Auditor de imágenes
+function auditImages(){
+  const missing = [];
+  const pushIfMissing = (arr, type) => {
+    arr.forEach(x=>{
+      const has = !!(x.img || IMG[x.slug]);
+      if(!has || x.img===''){
+        missing.push({type, name:x.name, slug:x.slug});
+      }
+    });
+  };
+  pushIfMissing(LOCATIONS,'Lugar');
+  pushIfMissing(ENEMIES,'Enemigo');
+  pushIfMissing(ITEMS,'Objeto');
+  pushIfMissing(ABILITIES,'Habilidad');
+  pushIfMissing(ALLIES,'Aliado');
+  pushIfMissing(BOSSES,'Jefe');
+
+  const box = qs('#audit');
+  if(!missing.length){
+    box.innerHTML = '✅ Todas las entidades tienen imagen o fallback.';
+    return;
+  }
+  const list = missing.map(m=>`<li><b>${m.type}</b>: ${m.name} <code>${m.slug}</code></li>`).join('');
+  box.innerHTML = `<b>Pendientes de imagen (${missing.length}):</b><ul>${list}</ul><div class="help">Tip: agrega la URL en <code>IMG['slug'] = 'https://...'</code> o en el campo <code>img</code> del catálogo.</div>`;
+  console.log('Faltan imágenes para:', missing);
+}
+
+// helpers DOM
+const qs = s=>document.querySelector(s);
+qs('#btnStart').addEventListener('click', ()=> start(state.seed));
+qs('#btnSeed').addEventListener('click', ()=> { state.seed = Math.floor(Math.random()*1e12); qs('#seedLabel').textContent=state.seed; });
+qs('#btnShare')?.addEventListener('click', share);
+qs('#btnAudit').addEventListener('click', auditImages);
+qs('#seedLabel').textContent = state.seed;
+
+  // --- 4) Sinergías leves para invocaciones (meta estable)
+  SYNERGIES.push(
+    {needs:'cualquiera', withTag:'invocado', bonus:3},
+    {needs:'cualquiera', withTag:'invocador', bonus:3}
+  );
+
+  // --- 5) HUD: agregamos contador "Invocaciones"
+  (function addInvHud(){
+    const estadoPanel = Array.from(document.querySelectorAll('.panel')).find(p => p.textContent.trim().startsWith('Estado'));
+    if(!estadoPanel) return;
+    const grid = Array.from(estadoPanel.querySelectorAll('div')).find(d => d.style.display?.includes('grid'));
+    if(!grid || grid.querySelector('#nInv')) return;
+    const el = document.createElement('div');
+    el.className = 'score';
+    el.innerHTML = '<span class="tag">Invocaciones</span> <b id="nInv">0</b>';
+    grid.appendChild(el);
+  })();
+
+  // --- 6) Rondas: insertamos Enemigo extra + Invocación antes de los Jefes
+  window.ROUNDS_PLAN = [
+    {type:'objeto',   title:'Ronda 1: Item'},
+    {type:'enemigo',  title:'Ronda 2: Enemigo'},
+    {type:'aliado',   title:'Ronda 3: Aliado'},
+    {type:'enemigo',  title:'Ronda 4: Enemigo'},
+    {type:'objeto',   title:'Ronda 5: Item'},
+    {type:'enemigo',  title:'Ronda 6: Enemigo'},
+    {type:'habilidad',title:'Ronda 7: Habilidad'},
+    {type:'aliado',   title:'Ronda 8: Aliado'},
+    {type:'enemigo',  title:'Ronda 9: Enemigo'},
+    {type:'enemigo',  title:'Ronda 10: Enemigo'},
+    {type:'objeto',   title:'Ronda 11: Item'},
+    {type:'enemigo',  title:'Ronda 12: Enemigo'},
+    {type:'objeto',   title:'Ronda 13: Item'},
+    {type:'enemigo',  title:'Ronda 14: Enemigo'},
+    {type:'habilidad',title:'Ronda 15: Habilidad'},
+    {type:'enemigo',  title:'Ronda 16: Enemigo'},
+    {type:'enemigo',  title:'Ronda 17: Enemigo extra'},
+    {type:'invocacion', title:'Ronda 18: Invocación'},
+    {type:'jefe',     title:'Ronda 19: Jefe 1'},
+    {type:'jefe',     title:'Ronda 20: Jefe 2'}
+  
+
+  ];
+
+  // --- 7) Monkey-patch de funciones para soportar "invocacion" y sumar poder
+  const _start = window.start;
+  const _nextRound = window.nextRound;
+  const _applyChoice = window.applyChoice;
+  const _baseTeamPower = window.baseTeamPower;
+  const _endGame = window.endGame;
+  const _refreshHUD = window.refreshHUD;
+
+  // aseguramos campo en el estado
+  if (!('invocations' in state)) state.invocations = [];
+
+  // start: resetea invocaciones y actualiza UI de rondas
+  window.start = function(seed){
+    _start(seed);
+    state.invocations = [];
+    state.storyBattles = [];
+  state.storyStats = {};
+    const kpi = document.querySelector('#kpiRondas'); if (kpi) kpi.textContent = '20';
+  };
+
+  // nextRound: incluye fuente INVOCATIONS cuando toque
+  window.nextRound = function(){
+    if(!state.loc){ return; }
+    state.round++;
+    const plan = ROUNDS_PLAN[state.round-1]; if(!plan){ return endGame(); }
+    document.querySelector('#prog').style.width = ((state.round-1)/state.totalRounds*100)+'%';
+    document.querySelector('#roundTitle').textContent = `${plan.title} — (${state.round}/${state.totalRounds})`;
+
+    let source=[];
+    if(plan.type==='enemigo') source=ENEMIES;
+    if(plan.type==='objeto') source=ITEMS;
+    if(plan.type==='aliado') source=ALLIES;
+    if(plan.type==='habilidad') source=ABILITIES;
+    if(plan.type==='invocacion') source=INVOCATIONS;
+    if(plan.type==='jefe') source=BOSSES;
+
+    // no repetir opciones en la misma run
+    let pool = source.filter(x=>!state.used.has(x.slug) && !state.offered.has(x.slug));
+    if(pool.length<2) pool = source.filter(x=>!state.used.has(x.slug));
+
+    const {prefer,avoid} = (typeof allMapPrefs==='function')? allMapPrefs() : {prefer:new Set(), avoid:new Set()};
+
+    const weights = pool.map(x=>{
+      let w=1; const tags = x.tags||[];
+      if(tags.some(t=>prefer.has(t))) w *= 1.8;
+      if(tags.some(t=>avoid.has(t)))  w *= 0.6;
+      if(plan.type==='aliado'){
+        const g = (function allyGroupLocal(a){
+          const t=a.tags||[]; if(t.includes('mascota')) return 'mascota';
+          if(t.includes('influencer')||t.includes('stream')||t.includes('cr')) return 'creador';
+          return 'combat';
+        })(x);
+        const count = (state.groupCounts?.aliado?.[g]||0);
+        w *= 1/(1+0.9*count);
+      }
+      if(plan.type==='enemigo' && state.loc.tags?.includes('dinosaurios') && x.cat==='criaturas') w*=1.2;
+      return Math.max(0.2, w);
+    });
+
+    const opts = sampleWeighted(pool, weights, 2, state.rng||Math.random);
+    opts.forEach(o=>state.offered.add(o.slug));
+    renderChoices(opts, plan.type);
+  };
+
+  // applyChoice: nuevo branch para invocación
+  window.applyChoice = function(type, slugSel){
+    const data = document.querySelector('#choices').dataset;
+    const opts = JSON.parse(data.opts||'[]'); 
+    const choice = opts.find(o=>o.slug===slugSel) || opts[0];
+
+    if(type==='lugar'){
+      state.loc=choice; state.danger += choice.hazard;
+      addLog(`Mapa: <b>${choice.name}</b> → <i>peligro base +${choice.hazard}</i>.`);
+      refreshHUD();
+      return nextRound();
+    }
+
+    state.used.add(choice.slug);
+
+    if(type==='enemigo'){ state.enemies.push(choice); state.danger += choice.threat; addLog(`Enemigo: <b>${choice.name}</b> → <i>amenaza +${choice.threat}</i>.`, 'bad'); }
+    if(type==='objeto'){ state.items.push(choice); addLog(`Objeto: <b>${choice.name}</b> → <i>poder +${choice.power}${choice.bonus?`, bonus +${choice.bonus}`:''}</i>.`, 'good'); }
+    if(type==='habilidad'){ state.skills.push(choice); addLog(`Habilidad: <b>${choice.name}</b> aprendida → <i>poder +${choice.power}</i>.`, 'good'); }
+    if(type==='aliado'){
+      state.allies.push(choice);
+      state.groupCounts.aliado = state.groupCounts.aliado || {};
+      const g = (function allyGroupLocal(a){
+        const t=a.tags||[]; if(t.includes('mascota')) return 'mascota';
+        if(t.includes('influencer')||t.includes('stream')||t.includes('cr')) return 'creador';
+        return 'combat';
+      })(choice);
+      state.groupCounts.aliado[g]=(state.groupCounts.aliado[g]||0)+1;
+      addLog(`Aliado: <b>${choice.name}</b> → <i>poder +${choice.power}${choice.bonus?`, bonus +${choice.bonus}`:''}</i>.`, 'good');
+    }
+    if(type==='invocacion'){
+      state.invocations.push(choice);
+      addLog(`Invocación: <b>${choice.name}</b> → <i>poder +${choice.power}</i>.`, 'good');
+    }
+    if(type==='jefe'){ state.bosses.push(choice); const res = resolveBoss(choice); addLog(res.text, res.ok? 'good':'bad'); }
+
+    refreshHUD();
+    if(state.round >= state.totalRounds){ endGame(); } else { nextRound(); }
+  };
+
+  // baseTeamPower: suma invocaciones
+  window.baseTeamPower = function(){
+    let p=0;
+    for(const it of state.items){ p += (it.power||0); if(it.bonus) p += Math.max(0, it.bonus); }
+    for(const al of state.allies){ p += (al.power||0); if(al.bonus) p += Math.max(0, al.bonus); }
+    for(const sk of state.skills){ p += (sk.power||0); }
+    for(const iv of (state.invocations||[])){ p += (iv.power||0); } // << NUEVO
+    return p;
+  };
+
+  // refreshHUD: muestra contador de invocaciones
+  window.refreshHUD = function(){
+    _refreshHUD();
+    const el = document.querySelector('#nInv'); if (el) el.textContent = (state.invocations||[]).length;
+  };
+
+  // endGame: añade invocaciones al resumen
+  window.endGame = function(){
+    // llamamos al endGame original pero primero vaciamos choices (por si el original depende)
+    try {
+      document.querySelector('#choices').innerHTML='';
+    }catch(e){}
+    // Ejecutamos el original para construir la mayor parte del resumen
+    _endGame();
+
+    // Inyectamos las invocaciones al grid de resumen (si no estaban)
+    const sum = document.querySelector('#summary');
+    if(!sum) return;
+    const blocks = (state.invocations||[]).map(b=>`
+      <div class="sum-card">
+        <div class="thumb"><img src="${b.img || IMG[b.slug] || (typeof makeBadge==='function'? makeBadge('habilidad') : '')}" alt="${b.name}" onerror="this.onerror=null; this.src='${(typeof makeBadge==='function'? makeBadge('habilidad') : '')}'"></div>
+        <h5>${b.name}</h5><p class="mini">Invocación</p>
+      </div>`).join('');
+    sum.insertAdjacentHTML('beforeend', blocks);
+};
+
+  // share: incluye invocaciones en el build
+  window.share = function(){
+    const build = {
+      seed: state.seed,
+      loc: state.loc?.name,
+      enemies: state.enemies.map(e=>e.name),
+      items: state.items.map(o=>o.name),
+      allies: state.allies.map(a=>a.name),
+      skills: state.skills.map(s=>s.name),
+      invocaciones: (state.invocations||[]).map(i=>i.name),
+      bosses: state.bosses.map(b=>b.name)
+    };
+    const txt = `Historia 50/50 — semilla ${state.seed}\n`+JSON.stringify(build,null,2);
+    navigator.clipboard.writeText(txt).then(()=>{ alert('Copiado al portapapeles ✅'); });
+  };
+
+  console.log('%cParche de Invocaciones cargado','background:#7c5cff;color:#fff;padding:4px 8px;border-radius:6px');
+
+
+  // === Storytelling determinista por puntos + epílogo ===
+
+// Poder que exige un enemigo: jefes usan bossPower, enemigos usan threat*6
+function enemyNeed(foe){
+  return (typeof foe.bossPower === 'number')
+    ? foe.bossPower
+    : Math.round((foe.threat || 5) * 6);
+}
+
+// Poder de una carta (aliado/objeto/habilidad) contra un enemigo concreto.
+// Sinergias/penalizaciones a mitad de intensidad para el 1v1.
+function combatPowerOf(entry, foe){
+  let p = (entry.power || 0) + Math.max(0, entry.bonus || 0);
+  const tags = entry.tags || [];
+
+  for(const syn of SYNERGIES){
+    if(syn.needs === 'cualquiera' || foe.cat === syn.needs){
+      if(tags.includes(syn.withTag)) p += Math.ceil(syn.bonus/2);
+    }
+  }
+  for(const pen of PENALTIES){
+    if(foe.cat === pen.needs && tags.includes(pen.withTag)){
+      p = Math.round(p * pen.mult);
+    }
+  }
+  return Math.max(0, p);
+}
+
+// Quién te conviene para enfrentar a un enemigo (mejor "counter" del pool)
+function bestCounterFor(foe){
+  const pool = [...state.allies, ...state.skills, ...state.items];
+  if(pool.length === 0) return null;
+  let best = null;
+  for(const x of pool){
+    const score = combatPowerOf(x, foe);
+    if(!best || score > best.score) best = { who: x, score };
+  }
+  return best; // { who, score }
+}
+
+// Descripción breve (si no hay desc:, arma una con tags)
+function shortDesc(x, kind){
+  if(x.desc) return x.desc;
+  const t = (x.tags||[]).slice(0,3).join(', ');
+  const base = {enemigo:'Amenaza', aliado:'Aliado', objeto:'Objeto', habilidad:'Habilidad', jefe:'Jefe'};
+  return `${base[kind]||'Carta'}${t?` · tags: ${t}`:''}`;
+}
+
+// Registro interno para epílogo
+function creditBattle(foe, actorName, actorSlug, val, need, win){
+  state.storyBattles.push({foe: foe.name, need, actor: actorName, actorSlug, val, win});
+  if(actorSlug){
+    const s = state.storyStats[actorSlug] || (state.storyStats[actorSlug] = {name: actorName, wins:0, losses:0, delta:0});
+    if(win) s.wins++; else s.losses++;
+    s.delta += (val - need);
+  }
+}
+
+// 5) STORYTELLING determinista por puntos (enemigo vs mejor counter del equipo)
+// --- estado de historia
+state.storyBattles = state.storyBattles || [];
+state.storyStats   = state.storyStats   || {};
+
+// poder requerido por enemigo/jefe
+function _needForFoe(foe){
+  return (typeof foe.bossPower === 'number') ? foe.bossPower : Math.round((foe.threat || 5) * 6);
+}
+// cuánto aporta una carta concreta contra ese enemigo (sinergias/penalizaciones a mitad)
+function _powerVs(entry, foe){
+  let p = (entry.power || 0) + Math.max(0, entry.bonus || 0);
+  const tags = entry.tags || [];
+  for(const syn of SYNERGIES){
+    if(syn.needs === 'cualquiera' || foe.cat === syn.needs){
+      if(tags.includes(syn.withTag)) p += Math.ceil(syn.bonus/2);
+    }
+  }
+  for(const pen of PENALTIES){
+    if(foe.cat === pen.needs && tags.includes(pen.withTag)){
+      p = Math.round(p * pen.mult);
+    }
+  }
+  return Math.max(0, p);
+}
+// mejor counter del pool actual
+function _bestCounter(foe){
+  const pool = [...state.allies, ...state.skills, ...state.items, ...(state.invocations||[])];
+  if(!pool.length) return null;
+  let best = null;
+  for(const x of pool){
+    const s = _powerVs(x, foe);
+    if(!best || s > best.score) best = {who:x, score:s};
+  }
+  return best; // {who, score}
+}
+// registrar batalla para epílogo
+function _credit(foe, actor, val, need, win){
+  state.storyBattles.push({foe:foe.name, actor:actor?.name||'—', slug:actor?.slug||'', val, need, win});
+  if(actor){
+    const s = state.storyStats[actor.slug] || (state.storyStats[actor.slug] = {name:actor.name, wins:0, losses:0, delta:0});
+    win ? s.wins++ : s.losses++;
+    s.delta += (val - need);
+  }
+}
+// narrar duelo y escribir en el registro
+function _narrate(foe){
+  const need = _needForFoe(foe);
+  const best = _bestCounter(foe);
+  if(!best){
+    addLog(`⚠️ <b>No tenías con qué responder</b> a <b>${foe.name}</b> (requería ${need}).`, 'bad');
+    _credit(foe, null, 0, need, false);
+    return;
+  }
+  const val = best.score;
+  const win = val >= need;
+  const verb = win ? 'venció a' : 'cayó contra';
+  addLog(`⚔️ <b>${best.who.name}</b> ${verb} <b>${foe.name}</b> — poder <b>${val}</b> vs <b>${need}</b> → ${win? 'GANASTE' : 'PERDISTE'}.`, win?'good':'bad');
+  _credit(foe, best.who, val, need, win);
+}
+
+// 6) Enganche suave: envolvemos applyChoice y endGame para inyectar historia/epílogo
+const __applyChoice_prev = window.applyChoice;
+window.applyChoice = function(type, slugSel){
+  // Si es enemigo o jefe, tomamos el objeto elegido desde el dataset para narrar ANTES de avanzar ronda
+  if(type==='enemigo' || type==='jefe'){
+    try{
+      const data = JSON.parse(document.querySelector('#choices').dataset.opts||'[]');
+      const foe = data.find(o=>o.slug===slugSel) || data[0];
+      if(foe) _narrate(foe);
+    }catch(e){}
+  }
+  return __applyChoice_prev(type, slugSel);
+};
+
+// --- parche endGame con epílogo ---
+const __endGame_prev = window.endGame;  // conserva el original si existía
+
+window.endGame = function () {
+  // 1) corre el endGame original para construir el resumen/base
+  if (typeof __endGame_prev === 'function') {
+    __endGame_prev();
+  }
+
+  // 2) epílogo
+  try {
+    const battles = state.storyBattles || [];
+    if (!battles.length) return;
+
+    const wins   = battles.filter(b => b.win).length;
+    const losses = battles.length - wins;
+
+    const stats = Object.values(state.storyStats || {});
+    stats.sort((a, b) => (b.wins - a.wins) || (b.delta - a.delta));
+    const mvp = stats[0];
+
+    const worst = battles
+      .slice()
+      .sort((a, b) => (a.val - a.need) - (b.val - b.need))[0];
+
+    const ep = `
+      <div class="help" style="margin-top:8px">
+        <b>Epilogo</b><br>
+        En <b>${state.loc?.name || '—'}</b> enfrentaste <b>${battles.length}</b> amenazas:
+        <b>${wins}</b> victorias y <b>${losses}</b> derrotas.
+        ${mvp ? `<br>MVP: <b>${mvp.name}</b> (${mvp.wins} victorias, balance ${mvp.delta >= 0 ? '+' : ''}${mvp.delta}).` : ''}
+        ${worst ? `<br>Momento más duro: <b>${worst.foe}</b> superó a ${worst.actor} (${worst.val} vs ${worst.need}).` : ''}
+      </div>`;
+
+    const box = document.querySelector('#finalTxt');
+    if (box) box.insertAdjacentHTML('beforeend', ep);
+  } catch (e) {
+    console.warn('Error en epílogo:', e);
+  }
+};
+
+
+</script>
+</body>
+</html>
