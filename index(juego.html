@@ -371,17 +371,28 @@ const INVOCATIONS = [
   {name:'Oleada de mapaches', slug:'racoon-swarm', power:7, tags:['animal','caos'], img:'https://previews.123rf.com/images/linawhite/linawhite1911/linawhite191100016/135039158-many-raccoons-are-sitting-against-a-concrete-wall-and-looking-up-a-lot-of-raccoons.jpg'},
   {name:'Dragón de Stardust (Terraria)', slug:'stardust-dragon', power:12, tags:['terraria','dragon'], img:'https://i.redd.it/cmvkumy2dde41.png'},
   {name:'Bastón de aves (Terraria)', slug:'bird-staff', power:6, tags:['terraria','invocador'], img:'https://art.pixilart.com/4b5d894a13234fd.png'},
-  {name:'Bastón de los gemelos (Terraria)', slug:'twins-staff', power:10, tags:['terraria','invocador'], img:'https://static.wikia.nocookie.net/terraria/images/4/48/Optic.png/revision/latest?cb=20171220032509&path-prefix=es'}
+  {name:'Bastón de los gemelos (Terraria)', slug:'twins-staff', power:10, tags:['terraria','invocador'], img:'https://static.wikia.nocookie.net/terraria/images/4/48/Optic.png/revision/latest?cb=20171220032509&path-prefix=es'},
+  {name:'BT21 – Mascotas BTS', slug:'bt21', power:2, tags:['bts','mascota'], img:'https://static.wikia.nocookie.net/bt21/images/d/dd/Bt21-group_1600.jpeg/revision/latest?cb=20210215170534'}
 ];
 
 const ENEMIES = [
   // --- pedidos
 
-
+  {name:'Voldemort', slug:'voldemort', threat:10, tags:['harry','oscuridad'], img:'https://upload.wikimedia.org/wikipedia/en/a/a3/Lordvoldemort.jpg'},
+  {name:'Bellatrix Lestrange', slug:'bellatrix', threat:7, tags:['harry','caos'], img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQok8p9sHpt0A0A5UzVfOuPhQLAogMp6VlYBw&s'},
+  {name:'Lucius Malfoy', slug:'lucius', threat:5, tags:['harry','magia'], img:'https://fotografias.antena3.com/clipping/cmsimages01/2025/04/27/0FF4A12A-ABB5-40CC-9BF0-9A09CFC4663D/jason-isaacs-harry-potter-camara-secreta_104.jpg?crop=1270,1270,x487,y0&width=1200&height=1200&optimize=low&format=webply'},
+  {name:'Azula', slug:'azula', threat:6, tags:['avatar','fuego'], img:'https://static.wikia.nocookie.net/avatar/images/4/42/Azula_hanging_from_a_cliff.png/revision/latest?cb=20121225195159'},
+  {name:'Sub-Zero', slug:'subzero', threat:7, tags:['mk','hielo'], img:'https://i.ebayimg.com/images/g/hjEAAOSwvmxkjp23/s-l1200.jpg'},
+  {name:'Scorpion', slug:'scorpion', threat:8, tags:['mk','infierno'], img:'https://i.pinimg.com/736x/5b/ea/41/5bea41f99a7c011c2e059a24fd78525e.jpg'},
+  {name:'Shao Kahn', slug:'shao', threat:10, tags:['mk','jefe'], img:'https://img.asmedia.epimg.net/resizer/v2/UJ2JY44FANN4RP3PB5IB6O3EE4.jpg?auth=c31239dd743f5943236bc7f1e504785ff428e825bc371cc2899cb722ccce23ea&width=1200&height=1200&smart=true'},
+  {name:'Shang Tsung', slug:'shang', threat:8, tags:['mk','hechicero'], img:'https://static0.srcdn.com/wordpress/wp-content/uploads/2022/07/Mortal-Kombat-Shang-Tsung-Old-Man.jpg?w=1600&h=900&fit=crop'},
+  {name:'Brayan Ganosa', slug:'brayan', threat:1, tags:['enemigo','local'], img:'https://observador.cr/wp-content/uploads/2021/01/Bryan-Ganoza.png'},
+  {name:'Paladín (Terraria)', slug:'paladin', threat:10, tags:['terraria','fortaleza'], img:'https://static.wikia.nocookie.net/featteca/images/f/f6/Paladin_Verso_Featteca.png/revision/latest?cb=20220903171700&path-prefix=es'},
+  {name:'Rey Slime (Terraria)', slug:'rey-slime', threat:7, tags:['terraria','slime'], img:'https://pm1.aminoapps.com/6893/d2dd493c2c8cf7225924ef9126e0e613f755ed7ar1-162-145v2_00.jpg'},
   {name:'Simplemente Duki', slug:'duki-enemy', threat:11, cat:'rapper', tags:['trap','musica'], img:'https://i.imgur.com/0gnG2cJ.jpeg'},
   {name:'Tapir', slug:'tapir', threat:3, cat:'animal', tags:['selva'], img:'https://wallpapers.com/images/hd/ugly-animals-pictures-804ai1awcs2320w3.jpg'},
-  {name:'Slime mamado', slug:'slime-buff', threat:7, cat:'slime', tags:['musculo','fantasia'], img:'https://images.steamusercontent.com/ugc/2117313645619627165/64A2B9C4AF5C2CE62B6EDA0B45D8723F0C242CB9/?imw=512&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false'},
-  {name:'Akaza (Kimetsu)', slug:'akaza', threat:12, cat:'demonio', tags:['kimetsu','lucha'], img:'https://cdna.artstation.com/p/assets/images/images/071/413/658/large/retratosanime-098.jpg?1705125478'},
+  {name:'Slime mamado', slug:'slime-buff', threat:8, cat:'slime', tags:['musculo','fantasia'], img:'https://images.steamusercontent.com/ugc/2117313645619627165/64A2B9C4AF5C2CE62B6EDA0B45D8723F0C242CB9/?imw=512&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false'},
+  {name:'Akaza (Kimetsu)', slug:'akaza', threat:13, cat:'demonio', tags:['kimetsu','lucha'], img:'https://cdna.artstation.com/p/assets/images/images/071/413/658/large/retratosanime-098.jpg?1705125478'},
   {name:'Titán mujer (SNK)', slug:'female-titan', threat:12, cat:'titan', tags:['snk','gigante'], img: 'https://dailyanimeart.com/wp-content/uploads/2013/12/female-titan-by-jxbp.png'},
   {name:'Titán bestia (SNK)', slug:'beast-titan', threat:12, cat:'titan', tags:['snk','gigante'], img:'https://preview.redd.it/before-we-knew-about-zeke-what-were-some-of-your-initial-v0-aiarxjp3vlta1.jpg?width=640&crop=smart&auto=webp&s=807994fab93fc2dbeec278810068cd3981b55813'},
   {name:'Capybara chill', slug:'capybara', threat:2, cat:'animal', tags:['relax','memes'], img:'https://avatars.fastly.steamstatic.com/9d9d3ae19bcf34e6056e2e54fca2132bdf737102_full.jpg'},
@@ -396,14 +407,14 @@ const ENEMIES = [
   {name:'SCP-847 — El Maniquí', slug:'scp-847', threat:3, cat:'scp', img: 'https://i.redd.it/2t3c6wllsjs71.jpg', tags:['maniqui','psiquis'], desc:'Cuidado'},
   {name:'SCP-173 — La Estatua', slug:'scp-173', threat:7, cat:'scp', img:'https://img.wattpad.com/d1da15ab1a0657739e7fcead9e83a2651eb98506/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f776174747061642d6d656469612d736572766963652f53746f7279496d6167652f35454350345731454b47417365413d3d2d3932383830353231372e313632366131653764343939643263663333333338373637333739352e6a7067?s=fit&w=720&h=720', tags:['rompecuellos','linea-de-vision'], desc:'no le quites los ojos de encima'},
   {name:'Sephiroth', slug:'sephiroth', threat:9, cat:'demonio', img:'https://static.wikia.nocookie.net/versus-compendium/images/4/49/Sephiroth_SSBU.png/revision/latest?cb=20210922193959', tags:['villano','espada']},
-  {name:'Drácula (Castlevania)', slug:'dracula-castlevania', threat:9, cat:'demonio', img:'https://i.redd.it/6cj3nivtdlee1.jpeg', tags:['vampiro']},
-  {name:'Herobrine', slug:'herobrine', threat:10, cat:'spectral', img:'https://media.forgecdn.net/avatars/thumbnails/1284/8/256/256/638835127317428233.png', tags:['mistico']},
+  {name:'Drácula (Castlevania)', slug:'dracula-castlevania', threat:10, cat:'demonio', img:'https://i.redd.it/6cj3nivtdlee1.jpeg', tags:['vampiro']},
+  {name:'Herobrine', slug:'herobrine', threat:11, cat:'spectral', img:'https://media.forgecdn.net/avatars/thumbnails/1284/8/256/256/638835127317428233.png', tags:['mistico']},
   {name:'Piedrero de chepe', slug:'piedrero', threat:5, cat:'humano', img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJqBUPVvmi4yFQADh1_GOhHis38xzY2VAyaQ&s', tags:['rango','impacto','improvisado']},
   {name:'Godzilla Bloodbath', slug:'godzilla-bloodbath', threat:16, cat:'kaiju', img:IMG['godzilla-bloodbath']},
   {name:'Colossal Titan', slug:'colossal-titan', threat:16, cat:'titan',img:'https://htdraw.com/wp-content/uploads/2020/05/How-to-draw-Colossal-Titan-from-the-Attack-on-Titan.jpg'},
   {name:'Slenderman', slug:'slenderman', threat:7, cat:'spectral'},
   {name:'Xenomorfo Praetorian', slug:'xenomorfo-praetorian', threat:9, cat:'alien'},
-  {name:'Nemesis', slug:'nemesis', threat:9, cat:'bioarma'},
+  {name:'Nemesis', slug:'nemesis', threat:11, cat:'bioarma'},
   {name:'Clicker (TLoU)', slug:'clicker-tlou', threat:4, cat:'infectado'},
   {name:'Enderman', slug:'enderman', threat:3, cat:'mistico'},
   {name:'Gremlins', slug:'gremlins', threat:2, cat:'criaturas'},
@@ -411,7 +422,7 @@ const ENEMIES = [
   {name:'Zarigüeya furiosa', slug:'zarigueya-furiosa', threat:9, cat:'animal'},
   {name:'Boolossus', slug:'boolossus', threat:3, cat:'spectral',img:'https://preview.redd.it/which-boolossus-fight-do-yall-prefer-v0-pitfbc2cgmwb1.jpg?width=480&format=pjpg&auto=webp&s=05724874770732b3f2d1c5cbfc3381d81e51080b'},
   {name:'Foxy', slug:'foxy', threat:3, cat:'animatronico',img:"https://i.pinimg.com/736x/2d/c7/8b/2dc78b45da95cff460a3cdf6c8cbb994.jpg"},
-  {name:'Hisoka', slug:'hisoka', threat:9, cat:'mago'},
+  {name:'Hisoka', slug:'hisoka', threat:10, cat:'mago'},
   {name:'Sukuna', slug:'sukuna', threat:14, cat:'demonio'},
   {name:'Figure (DOORS)', slug:'doors-figure', threat:5, cat:'roblox'},
   {name:'Seek (DOORS)', slug:'doors-seek', threat:4, cat:'roblox',img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTu44bCWa-H69L9etthhgXZ_xmleHbDE7TPVQ&s'},
@@ -430,7 +441,11 @@ const ENEMIES = [
 ].map(e=>({...e,img: e.img ?? (IMG[e.slug]||null)}));
 
 const ITEMS = [
-
+  {name:'Varita de Harry', slug:'wand-harry', power:7, tags:['harry','magia'], img:'https://aliss.cr/media/catalog/product/3/f/3f477a7dfddc0bf003f675bd207fd39541692060_file_1.jpg?optimize=medium&bg-color=255,255,255&fit=bounds&height=700&width=700&canvas=700:700'},
+  {name:'Varita de Hermione', slug:'wand-hermione', power:6, tags:['harry','magia'], img:'https://static.wikia.nocookie.net/esharrypotter/images/c/c6/HermioneGrangerWandNN8411.jpg/revision/latest/thumbnail/width/360/height/360?cb=20190624010127'},
+  {name:'Varita de Ron', slug:'wand-ron',power:4 , tags:['harry','magia'], img:'https://static.wikia.nocookie.net/esharrypotter/images/6/62/RonWeasleyWandNN8413.jpg/revision/latest?cb=20190706015308'},
+  {name:'Varita de Voldemort', slug:'wand-voldemort',power:7,  tags:['harry','magia'], img:'https://static.wikia.nocookie.net/esharrypotter/images/5/5a/LordVoldemortWandNN8403.jpg/revision/latest?cb=20190707002045'},
+  {name:'Abanicos de Kitana', slug:'kitana-fans',power:4,  tags:['mk','arma'], img:'https://i.blogs.es/7320ed/kitana/650_1200.jpg'},
   {name:'Bolsa de Doritos', slug:'doritos', power:2, tags:['comida','snack'], img:'https://storage.googleapis.com/images-prs-prd-c7e7986.prs.prd.v8.commerce.mi9cloud.com/product-images/zoom/00028400516471_1'},
   {name:'Manzana dorada (Minecraft)', slug:'golden-apple-mc', power:5, tags:['cura','minecraft'], img:'https://minecraft.wiki/images/Golden_Apple_JE2_BE2.png?aa827'},
   {name:'Manzana de Notch (Minecraft)', slug:'notch-apple', power:9, tags:['cura','minecraft','legendaria'], img:'https://pm1.aminoapps.com/5752/1bb09df88c31d1f0b8da51905108d940b7bd5cfb_hq.jpg'},
@@ -457,7 +472,7 @@ const ITEMS = [
   {name:'Escopeta', slug:'escopeta', power:5, tags:['rango','ruido','impacto'], img:'https://www.gamemodd.com/uploads/posts/2018-11/1541614236_1.jpg'},
   {name:'Pistola', slug:'pistola', power:3, tags:['rango','impacto'], img:'https://cdnx.jumpseller.com/armeria-magnum/image/42818959/IMG_3469.jpeg?1701292665'},
   {name:'Cuchillo', slug:'cuchillo', power:2, tags:['melee','corte','sigilo'], img:'https://i5.walmartimages.com/asr/38b2eb42-4823-42c7-bd8d-1adeb23674a4.9f9d32e61723be6cb1d861f76c10d2eb.png?odnHeight=612&odnWidth=612&odnBg=FFFFFF'},
-  {name:'Tenedor', slug:'tenedor', power:1, tags:['melee','improvisado','corte'], img:'https://tipscr.com/38915-home_default/tenedor-de-nylon-de-12-pulgadas-de-color-negro-thunder-plpp008bk.jpg'},
+  {name:'Tenedor', slug:'tenedor', threat:2, tags:['melee','improvisado','corte'], img:'https://tipscr.com/38915-home_default/tenedor-de-nylon-de-12-pulgadas-de-color-negro-thunder-plpp008bk.jpg'},
   {name:'Mazo de Kirby', slug:'kirby-hammer', power:4, tags:['impacto','melee','humor'], img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWcD9w21iNANuCIVfKcHODub934W1v-w8Pmw&s'}
 ];
 
@@ -476,14 +491,50 @@ const ABILITIES = [
   {name:'Frío y Caliente', slug:'frio-y-caliente', power:6, tags:['hielo','fuego'], img:'https://preview.redd.it/day-3-what-is-your-favorite-headcannons-about-shoto-todoroki-v0-63twa05tdhjd1.jpg?width=640&crop=smart&auto=webp&s=d2664d01caf7c1e166f4fd163720af3b1060bd04'},
   {name:'El que te reviento', slug:'el-que-te-reviento', power:6, tags:['impacto','humor','melee'], img:'https://i.ytimg.com/vi/DcGG1yyT7qE/mqdefault.jpg'},
   {name:'Rey de las Explosiones', slug:'rey-explosiones', power:6, tags:['explosion','impacto','area'], img:'https://i.ytimg.com/vi/aBooUlG_91U/maxresdefault.jpg'},
-  {name:'Invocación de Criaturas', slug:'invocacion-criaturas', power:8, tags:['invocador','control'], img: 'https://pm1.aminoapps.com/8831/3bd2c5483cb89e14a42d8200405c7832cb84a68cr1-385-846v2_hq.jpg' }
+  {name:'Invocación de Criaturas', slug:'invocacion-criaturas', power:8, tags:['invocador','control'], img: 'https://pm1.aminoapps.com/8831/3bd2c5483cb89e14a42d8200405c7832cb84a68cr1-385-846v2_hq.jpg' },
+  {name:'Trueno de Raiden', slug:'raiden-skill', power:8, tags:['mk','trueno'], img:'https://i.redd.it/yesterday-after-the-update-all-my-raiden-skins-had-blue-v0-desrlejmk22e1.jpg?width=3840&format=pjpg&auto=webp&s=f3d543cc318774f22d628e93f1477aaec7dc7109'},
+  {name:'Llamas de Liu Kang', slug:'liu-skill', power:7, tags:['mk','fuego'], img:'https://i.redd.it/7gt6sdbd3yr31.jpg'},
+
 ];
 
 const ALLIES = [
+
+  {name:'RM (BTS)', slug:'rm', power:4, tags:['musica','lider'], img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGFY8099SbXSRvDPdMRRqt-AjDPbSjKXxz-g&s'},
+  {name:'Jin (BTS)', slug:'jin', power:5, tags:['musica','humor'], img:'https://i.pinimg.com/564x/e0/c4/4c/e0c44c6188913a1b1d123624dba5770a.jpg'},
+  {name:'Suga (BTS)', slug:'suga', power:3, tags:['musica','rap'], img:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Suga_for_Marie_Claire_Korea%2C_May_2023_issue_05.png/1200px-Suga_for_Marie_Claire_Korea%2C_May_2023_issue_05.png'},
+  {name:'J-Hope (BTS)', slug:'jhope', power:2, tags:['musica','energia'], img:'https://upload.wikimedia.org/wikipedia/commons/6/6e/J-Hope_at_the_2022_Fact_Music_Awards_on_October_8%2C_2022_%28cropped%29.jpg'},
+  {name:'Jimin (BTS)', slug:'jimin', power:1, tags:['musica','baile'], img:'https://i.pinimg.com/736x/6c/22/c7/6c22c732aee9f6a843aa3616a82234dd.jpg'},
+  {name:'V (BTS)', slug:'v', power:4, tags:['musica','voz'], img:'https://upload.wikimedia.org/wikipedia/commons/7/75/220624_%EB%B0%A9%ED%83%84%EC%86%8C%EB%85%84%EB%8B%A8_%EB%B7%94%281%29.jpg'},
+  {name:'Jungkook (BTS)', slug:'jungkook', power:3, tags:['musica','prota'], img:'https://static.wikia.nocookie.net/musicidol/images/4/4b/JUNGKOOK_.jpg/revision/latest/scale-to-width-down/424?cb=20240406172548&path-prefix=es'},
+
+  {name:'Harry Potter', slug:'harry', power:8, tags:['magia','coraje'], img:'https://upload.wikimedia.org/wikipedia/en/d/d7/Harry_Potter_character_poster.jpg'},
+  {name:'Hermione Granger', slug:'hermione', power:7, tags:['magia','inteligencia'], img:'https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Hermione_Granger_poster.jpg/250px-Hermione_Granger_poster.jpg'},
+  {name:'Ron Weasley', slug:'ron', power:6, tags:['magia','lealtad'], img:'https://contentful.harrypotter.com/usf1vwtuqyxm/4kNfFPjlkbMYH07INaL6jN/b7ef0766f78d3fd6d5694417a5c71867/ron-weasley_2_1800x1248.png'},
+
+  {name:'Aang', slug:'aang', power:7, tags:['avatar','aire'], img:'https://static.wikia.nocookie.net/avatar/images/a/ae/Aang_at_Jasmine_Dragon.png/revision/latest/scale-to-width/360?cb=20250504214141'},
+  {name:'Katara', slug:'katara', power:4, tags:['agua','curacion'], img:'https://static.wikia.nocookie.net/avatar/images/7/7a/Katara_smiles_at_coronation.png/revision/latest/scale-to-width/360?cb=20150104171449'},
+  {name:'Zuko', slug:'zuko', power:7, tags:['fuego','redencion'], img:'https://static.wikia.nocookie.net/avatar/images/4/4b/Zuko.png/revision/latest/scale-to-width/360?cb=20180630112142'},
+  {name:'Toph', slug:'toph', power:5, tags:['tierra','fuerza'], img:'https://static.wikia.nocookie.net/avatar/images/4/46/Toph_Beifong.png/revision/latest/scale-to-width/360?cb=20131230122047'},
+
+  {name:'Mario (Smash)', slug:'mario', power:5, tags:['smash','nintendo'], img:'https://ssb.wiki.gallery/images/thumb/4/44/Mario_SSBU.png/250px-Mario_SSBU.png'},
+  {name:'Planta Piraña (Smash)', slug:'planta', power:2, tags:['smash','veneno'], img:'https://img.asmedia.epimg.net/resizer/v2/5KN4K5B4SVK4HFHT76T6GMY3QE.jpg?auth=d6c7017bf87017a64dffb51e1f977c1a9528fd8536635d7552e457db2a762835&width=360&height=203&smart=true'},
+  {name:'Joker (Persona 5)', slug:'joker', power:6, tags:['smash','ladron'], img:'https://i.redd.it/z16puyswrisd1.jpeg'},
+  {name:'Ridley (Smash)', slug:'ridley', power: 7, tags:['smash','alien'], img:'https://static.invenglobal.com/upload/image/2018/06/12/i1528835858563561.jpeg'},
+  {name:'Samus', slug:'samus', power:6, tags:['smash','armadura'], img:'https://www.geekgirlauthority.com/wp-content/uploads/2024/08/Samus-Aran.jpg'},
+
+  {name:'Jin Kazama (Tekken)', slug:'jin', power:7, tags:['tekken','lucha'], img:'https://upload.wikimedia.org/wikipedia/commons/3/3a/Jin_Kazama_Tekken_8.png'},
+  {name:'Kazuya Mishima', slug:'kazuya', power:8, tags:['tekken','demonio'], img:'https://upload.wikimedia.org/wikipedia/commons/a/ab/Kazuya_Mishima.jpg'},
+  {name:'Heihachi Mishima', slug:'heihachi', power:7, tags:['tekken','lucha'], img:'https://live.staticflickr.com/65535/54015626419_912ff62815_o.jpg'},
+
+  {name:'Liu Kang', slug:'liu', power:6, tags:['mk','fuego'], img:'https://i.redd.it/w4bladbqhbba1.jpg'},
+  {name:'Raiden', slug:'raiden', power:6, tags:['mk','trueno'], img:'https://static.wikia.nocookie.net/mkmobile/images/8/8f/Tn_raiden_a1.png/revision/latest?cb=20200522182249&path-prefix=es'},
+  {name:'Kitana', slug:'kitana', power:3, tags:['mk','reino'], img:'https://i.redd.it/ox8knxvn5gsb1.jpg'},
+  {name:'Johnny Cage', slug:'cage', power:3, tags:['mk','humor'], img:'https://static.wikia.nocookie.net/characterprofile/images/f/f0/Johnny_Cage.png/revision/latest?cb=20160106115936'},
+
   // --- perros (mascotas)
   {name:'Golden Retriever', slug:'golden-retriever', power:4, tags:['mascota','suerte','companion'], img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIhg8PdUmLPZjh_X9Os-NiyCaPUsQH_K5_9Q&s', desc:'Buen olfato y ánimo del equipo.'},
   {name:'Labrador', slug:'labrador-retriever', power:4, tags:['mascota','suerte','companion'], img:'https://i.redd.it/hu09cjrm7bbb1.jpg', desc:'Fiel, resistente y atento.'},
-  {name:'Akita Inu', slug:'akita-inu', power:4, tags:['mascota','guardia','companion'], img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcXE0y1XhD0T0KmlIR6YXmwJ93IBboE3MP5sLtqBVONkU1x963SyG0oBVTMEb1Gd0lM8k&usqp=CAU', desc:'Lealtad legendaria.'},
+  {name:'Akita Inu', slug:'akita-inu', power:8, tags:['mascota','guardia','companion'], img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcXE0y1XhD0T0KmlIR6YXmwJ93IBboE3MP5sLtqBVONkU1x963SyG0oBVTMEb1Gd0lM8k&usqp=CAU', desc:'Lealtad legendaria.'},
   {name:'Husky', slug:'siberian-husky', power:3, tags:['mascota','movilidad','companion'], img:'https://i.pinimg.com/736x/ac/08/10/ac081065097fc09c4a2f5aa3432b65b0.jpg', desc:'Resistencia y aullido motivador.'},
   {name:'Zaguate (Caramelo)', slug:'zaguate-caramelo', power:3, tags:['mascota','suerte','companion'], img:'https://www.pedigree.com.br/sites/g/files/fnmzdf2401/files/2024-12/vira-lata-caramelo-03.jpg', desc:'Vira-lata “caramelo”: suerte pura.'},
 
@@ -1216,6 +1267,7 @@ window.endGame = function () {
 </script>
 </body>
 </html>
+
 
 
 
