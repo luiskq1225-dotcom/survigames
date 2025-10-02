@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>¿Qué prefieres?</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: #171a2b;
+      --text: #e9ecff;
+      --muted: #96a0c8;
+      --a: #3fa7ff;
+      --b: #ff5a76;
+      --ok: #35d399;
+      --warn: #ffd166;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 80% -10%, #1d2140 0%, var(--bg) 60%);
+      color: var(--text);
+      display: grid; place-items: center;
+    }
+    .app { width: min(980px, 96vw); padding: 24px; }
+
+    header { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .brand { display: flex; gap: 10px; align-items: center; }
+    .logo { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, var(--a), var(--b)); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+    .brand h1 { font-size: 20px; margin: 0; letter-spacing: .2px; }
+
+    nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    button, .btn { cursor: pointer; border: 0; padding: 10px 14px; border-radius: 12px; background: #232845; color: var(--text); font-weight: 600; box-shadow: 0 6px 18px rgba(0,0,0,.15); }
+    button:hover, .btn:hover { filter: brightness(1.05); }
+    .primary { background: linear-gradient(135deg, var(--a), #6ad1ff); color: #07111f; }
+    .danger { background: linear-gradient(135deg, #ff6b6b, #ff8fa3); color: #230b0b; }
+
+    .card { background: var(--card); border: 1px solid #23284a; border-radius: 18px; padding: 18px; box-shadow: 0 12px 40px rgba(0,0,0,.25); }
+
+    .center { text-align: center; }
+    .muted { color: var(--muted); font-size: 14px; }
+
+    .question-text { font-size: clamp(22px, 4vw, 36px); font-weight: 800; line-height: 1.15; margin: 4px 0 18px; text-wrap: balance; }
+
+    .options { display: grid; gap: 12px; grid-template-columns: 1fr; }
+    @media (min-width: 700px) { .options { grid-template-columns: 1fr 1fr; } }
+
+    .option {
+      border-radius: 16px; padding: 0; min-height: 110px; display: grid; grid-template-rows: auto auto; align-items: stretch; text-align: center; font-size: 18px; font-weight: 700;
+      border: 1px solid rgba(255,255,255,.06);
+      transition: transform .08s ease, box-shadow .15s ease;
+      user-select: none; overflow: hidden;
+    }
+    .option:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0,0,0,.25); }
+    .option.a { background: linear-gradient(135deg, rgba(63,167,255,.15), rgba(63,167,255,.07)); }
+    .option.b { background: linear-gradient(135deg, rgba(255,90,118,.15), rgba(255,90,118,.07)); }
+
+    .opt-media { aspect-ratio: 16/9; width: 100%; background: #0d1022; display: grid; place-items: center; overflow: hidden; }
+    .opt-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .opt-caption { padding: 14px; }
+
+    .row { display: grid; gap: 12px; grid-template-columns: 1fr; }
+    @media (min-width: 680px) { .row.two { grid-template-columns: 1fr 1fr; } }
+
+    input[type="text"], textarea, input[type="url"] {
+      width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #2b315c; background: #11152b; color: var(--text); font-size: 16px;
+    }
+    label { font-size: 14px; color: var(--muted); margin-bottom: 6px; display: inline-block; }
+
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .bar { height: 14px; background: #0d1022; border-radius: 10px; overflow: hidden; border: 1px solid #242a52; }
+    .fill { height: 100%; }
+    .fill.a { background: var(--a); }
+    .fill.b { background: var(--b); }
+
+    .stack { display: grid; gap: 14px; }
+    .hidden { display: none !important; }
+    .right { text-align: right; }
+    .pill { padding: 6px 10px; border-radius: 999px; background: #232845; color: var(--muted); font-size: 12px; display: inline-flex; gap: 6px; align-items: center; }
+
+    .thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .thumbs .thumb { aspect-ratio: 16/9; background:#0d1022; border:1px solid #242a52; border-radius: 10px; overflow:hidden; display:grid; place-items:center; }
+    .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+    footer { margin-top: 16px; text-align: center; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <h1>¿Qué prefieres?</h1>
+      </div>
+      <nav>
+        <button id="navPlay">Jugar</button>
+        <button id="navCreate">Crear</button>
+        <button id="navFeed">Explorar</button>
+        <button id="navLogin" class="primary"></button>
+      </nav>
+    </header>
+
+    <!-- HOME / PLAY -->
+    <section id="viewPlay" class="card center">
+      <p class="muted">Pregunta creada por <span id="qAuthor">—</span></p>
+      <h2 id="qText" class="question-text">Cargando…</h2>
+      <div class="options">
+        <div id="optA" role="button" tabindex="0" class="option a">
+          <div class="opt-media" id="mediaA"></div>
+          <div class="opt-caption" id="captionA">Opción A</div>
+        </div>
+        <div id="optB" role="button" tabindex="0" class="option b">
+          <div class="opt-media" id="mediaB"></div>
+          <div class="opt-caption" id="captionB">Opción B</div>
+        </div>
+      </div>
+      <div id="result" class="stack hidden">
+        <div class="row two">
+          <div class="pill">A: <strong id="pctA">0%</strong></div>
+          <div class="pill right">B: <strong id="pctB">0%</strong></div>
+        </div>
+        <div class="stats">
+          <div class="bar"><div id="fillA" class="fill a" style="width:0%"></div></div>
+          <div class="bar"><div id="fillB" class="fill b" style="width:0%"></div></div>
+        </div>
+        <div class="row two">
+          <button id="next" class="btn">Siguiente pregunta ▶</button>
+          <button id="share" class="btn">Compartir</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CREATE -->
+    <section id="viewCreate" class="card stack hidden">
+      <h3 class="center" style="margin:0">Crear un “¿Qué prefieres?”</h3>
+      <p class="muted center">El texto queda centrado; puedes añadir imágenes a cada opción (URL o archivo).</p>
+      <div class="stack">
+        <div>
+          <label for="inpQ">Pregunta</label>
+          <textarea id="inpQ" rows="3" placeholder="¿Qué prefieres…?"></textarea>
+        </div>
+        <div class="row two">
+          <div class="stack">
+            <label>Opción A</label>
+            <input id="inpA" type="text" placeholder="Texto de la opción A" />
+            <input id="urlA" type="url" placeholder="URL de imagen (opcional)" />
+            <input id="fileA" type="file" accept="image/*" />
+            <div class="thumbs"><div class="thumb"><img id="prevA" alt=""/></div></div>
+          </div>
+          <div class="stack">
+            <label>Opción B</label>
+            <input id="inpB" type="text" placeholder="Texto de la opción B" />
+            <input id="urlB" type="url" placeholder="URL de imagen (opcional)" />
+            <input id="fileB" type="file" accept="image/*" />
+            <div class="thumbs"><div class="thumb"><img id="prevB" alt=""/></div></div>
+          </div>
+        </div>
+        <div class="row two">
+          <button id="saveQ" class="primary">Publicar</button>
+          <button id="clearForm">Limpiar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEED -->
+    <section id="viewFeed" class="card stack hidden">
+      <h3 style="margin:0">Explorar preguntas</h3>
+      <div id="feedList" class="stack"></div>
+    </section>
+
+    <!-- LOGIN -->
+    <section id="viewLogin" class="card stack hidden">
+      <h3 style="margin:0" class="center">Tu usuario</h3>
+      <p class="muted center">Por ahora es local (nickname). En la versión online será con email/Google.</p>
+      <div class="row two">
+        <div>
+          <label for="nick">Nickname</label>
+          <input id="nick" type="text" placeholder="Ej: PanitaXD" />
+        </div>
+        <div class="stack">
+          <label>&nbsp;</label>
+          <button id="setNick" class="primary">Guardar</button>
+          <button id="logout" class="danger">Borrar usuario local</button>
+        </div>
+      </div>
+      <p class="muted">Estado: <span id="authState">—</span></p>
+    </section>
+
+    <footer>
+      Hecho con ❤️ para prototipo. Votos, usuario e imágenes (base64/URL) guardados en <strong>localStorage</strong>.
+    </footer>
+  </div>
+
+  <script>
+    /*********************************
+     * PEQUEÑA "BASE DE DATOS" LOCAL *
+     *********************************/
+    const DB_KEY = 'qp_db_v2_images';
+    const USER_KEY = 'qp_user_v1';
+
+
+    const SUPABASE_URL = "https://jrzpqsgjghopnnntxypp.supabase.co"
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU"
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function loadDB() {
+      const raw = localStorage.getItem(DB_KEY);
+      if (raw) try { return JSON.parse(raw); } catch {}
+      // semilla inicial
+      const seed = [
+        mkQ('¿Qué prefieres?', 'Dormir 5 min más', 'Despertar sin sueño', 'sistema', null, null),
+        mkQ('¿Qué prefieres?', 'Comer pizza por un año', 'Comer sushi por un año', 'sistema', null, null),
+        mkQ('¿Qué prefieres?', 'Tu novio salga con su ex a café', 'Que pierda una pierna 😬', 'anon', null, null),
+        mkQ('¿Qué prefieres?', 'Tal chica de anime', 'Tal otra chica de anime', 'anon', null, null)
+      ];
+      saveDB(seed);
+      return seed;
+    }
+    function saveDB(arr){ localStorage.setItem(DB_KEY, JSON.stringify(arr)); }
+
+    function mkQ(q, a, b, author, aImg, bImg) {
+      return { id: crypto.randomUUID(), q, a, b, aImg: aImg||null, bImg: bImg||null, author, votesA: 0, votesB: 0, voters: {} };
+    }
+
+    function getUser(){ const raw = localStorage.getItem(USER_KEY); return raw ? JSON.parse(raw) : null; }
+    function setUser(nick){ localStorage.setItem(USER_KEY, JSON.stringify({ id: 'local:'+nick.toLowerCase(), nick })); }
+    function delUser(){ localStorage.removeItem(USER_KEY); }
+
+    let DB = loadDB();
+
+    /********************
+     * UI & NAVEGACIÓN  *
+     ********************/
+    const $ = (sel) => document.querySelector(sel);
+    const views = {
+      play: $('#viewPlay'),
+      create: $('#viewCreate'),
+      feed: $('#viewFeed'),
+      login: $('#viewLogin'),
+    };
+
+    function show(which){
+      Object.values(views).forEach(v => v.classList.add('hidden'));
+      views[which].classList.remove('hidden');
+      if (which === 'play') loadRandom();
+      if (which === 'feed') renderFeed();
+      updateNav();
+    }
+
+    $('#navPlay').onclick = () => show('play');
+    $('#navCreate').onclick = () => show('create');
+    $('#navFeed').onclick = () => show('feed');
+    $('#navLogin').onclick = () => show('login');
+
+    function updateNav(){
+      const u = getUser();
+      $('#navLogin').textContent = u ? `👤 ${u.nick}` : 'Iniciar sesión';
+      const authState = $('#authState');
+      if (authState) authState.textContent = u ? `Sesión local: ${u.nick}` : 'Sin sesión';
+    }
+
+    // LOGIN
+    $('#setNick').onclick = () => {
+      const nick = $('#nick').value.trim();
+      if (!nick) return alert('Escribe un nickname');
+      setUser(nick); updateNav(); alert('✓ Usuario guardado');
+    };
+    $('#logout').onclick = () => { delUser(); updateNav(); alert('Sesión local eliminada'); };
+
+    // HELPERS
+    function readFileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function resolveImage(urlInput, fileInput){
+      const url = urlInput.value.trim();
+      if (url) return url; // usar URL directa
+      const file = fileInput.files?.[0];
+      if (file) {
+        // Nota: se guarda como base64 en localStorage (solo prototipo)
+        try { return await readFileToDataUrl(file); } catch { return null; }
+      }
+      return null;
+    }
+
+    // CREATE
+    const fileA = $('#fileA');
+    const fileB = $('#fileB');
+    const urlA  = $('#urlA');
+    const urlB  = $('#urlB');
+    const prevA = $('#prevA');
+    const prevB = $('#prevB');
+
+    fileA?.addEventListener('change', async () => { const f = fileA.files?.[0]; prevA.src = f ? await readFileToDataUrl(f) : ''; });
+    fileB?.addEventListener('change', async () => { const f = fileB.files?.[0]; prevB.src = f ? await readFileToDataUrl(f) : ''; });
+    urlA?.addEventListener('change', () => { prevA.src = urlA.value || ''; });
+    urlB?.addEventListener('change', () => { prevB.src = urlB.value || ''; });
+
+    $('#saveQ').onclick = async () => {
+      const u = getUser();
+      if (!u) return alert('Primero inicia sesión (nickname).');
+      const q = $('#inpQ').value.trim();
+      const a = $('#inpA').value.trim();
+      const b = $('#inpB').value.trim();
+      const aImg = await resolveImage(urlA, fileA);
+      const bImg = await resolveImage(urlB, fileB);
+      if (!q || !a || !b) return alert('Completa la pregunta y ambas opciones.');
+      DB.push(mkQ(q, a, b, u.nick, aImg, bImg));
+      saveDB(DB);
+      $('#inpQ').value = ''; $('#inpA').value = ''; $('#inpB').value = '';
+      urlA.value=''; urlB.value=''; if (prevA) prevA.src=''; if (prevB) prevB.src=''; if (fileA) fileA.value=''; if (fileB) fileB.value='';
+      alert('✓ Publicada con imagen. ¡Vamos a jugar!');
+      show('play');
+    };
+    $('#clearForm').onclick = () => { $('#inpQ').value=''; $('#inpA').value=''; $('#inpB').value=''; urlA.value=''; urlB.value=''; if (prevA) prevA.src=''; if (prevB) prevB.src=''; if (fileA) fileA.value=''; if (fileB) fileB.value=''; };
+
+    // PLAY
+    let current = null;
+    function setOption(elMedia, elCaption, text, img){
+      elCaption.textContent = text || '';
+      elMedia.innerHTML = '';
+      if (img) {
+        const im = new Image();
+        im.loading = 'lazy';
+        im.decoding = 'async';
+        im.alt = text || '';
+        im.src = img;
+        elMedia.appendChild(im);
+      } else {
+        elMedia.innerHTML = '<span class="muted">Sin imagen</span>';
+      }
+    }
+
+    function loadRandom(){
+      if (!DB.length) return;
+      current = DB[Math.floor(Math.random()*DB.length)];
+      $('#qAuthor').textContent = current.author || 'anon';
+      $('#qText').textContent = current.q;
+      setOption($('#mediaA'), $('#captionA'), current.a, current.aImg);
+      setOption($('#mediaB'), $('#captionB'), current.b, current.bImg);
+      $('#result').classList.add('hidden');
+    }
+
+    function vote(which){
+      const u = getUser();
+      if (!u) return alert('Primero inicia sesión (nickname).');
+      if (!current) return;
+      if (current.voters[u.id]) return showResult();
+      if (which === 'A') current.votesA++; else current.votesB++;
+      current.voters[u.id] = which;
+      saveDB(DB);
+      showResult();
+    }
+
+    function showResult(){
+      const total = (current.votesA + current.votesB) || 1;
+      const pctA = Math.round(current.votesA * 100 / total);
+      const pctB = 100 - pctA;
+      $('#pctA').textContent = pctA + '%';
+      $('#pctB').textContent = pctB + '%';
+      $('#fillA').style.width = pctA + '%';
+      $('#fillB').style.width = pctB + '%';
+      $('#result').classList.remove('hidden');
+    }
+
+    $('#optA').onclick = () => vote('A');
+    $('#optB').onclick = () => vote('B');
+    $('#next').onclick = () => loadRandom();
+
+    $('#share').onclick = async () => {
+      const text = `¿Qué prefieres? ${current.q}
+A) ${current.a}
+B) ${current.b}`;
+      try {
+        await navigator.clipboard.writeText(text);
+        alert('Copiado al portapapeles ✅');
+      } catch {
+        alert('No se pudo copiar.');
+      }
+    };
+
+    // FEED
+    function renderFeed(){
+      const list = $('#feedList');
+      list.innerHTML = '';
+      [...DB].reverse().forEach(item => {
+        const total = (item.votesA + item.votesB) || 0;
+        const pct = total ? Math.round(item.votesA*100/total) : 0;
+        const el = document.createElement('div');
+        el.className = 'card stack';
+        el.innerHTML = `
+          <div class="muted">Por <strong>${item.author || 'anon'}</strong></div>
+          <div class="question-text center">${item.q}</div>
+          <div class="row two">
+            <div class="thumb">${item.aImg ? `<img src="${item.aImg}" alt="A" loading="lazy" decoding="async"/>` : '<span class="muted" style="display:grid;place-items:center;height:100%">Sin imagen</span>'}</div>
+            <div class="thumb">${item.bImg ? `<img src="${item.bImg}" alt="B" loading="lazy" decoding="async"/>` : '<span class="muted" style="display:grid;place-items:center;height:100%">Sin imagen</span>'}</div>
+          </div>
+          <div class="row two">
+            <div class="pill">A: ${item.a}</div>
+            <div class="pill right">B: ${item.b}</div>
+          </div>
+          <div class="stats">
+            <div class="bar"><div class="fill a" style="width:${pct}%"></div></div>
+            <div class="bar"><div class="fill b" style="width:${100-pct}%"></div></div>
+          </div>
+          <div class="row two">
+            <button class="btn" data-id="${item.id}">Jugar esta</button>
+            <div class="pill">Votos: ${total}</div>
+          </div>
+        `;
+        el.querySelector('button').onclick = () => { current = item; $('#qAuthor').textContent = item.author || 'anon'; $('#qText').textContent = item.q; setOption($('#mediaA'), $('#captionA'), item.a, item.aImg); setOption($('#mediaB'), $('#captionB'), item.b, item.bImg); show('play'); };
+        list.appendChild(el);
+      });
+    }
+
+    // START
+    (function init(){
+      updateNav();
+      show('play');
+    })();
+  </script>
+</body>
+</html>
