@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Survigames — UGC + Foro (Supabase)</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--bg:#0f1115;--paper:#151922;--ink:#e9eef6;--muted:#9aa3b2;--line:#242a36;--brand:#6ea8fe;--ok:#8be089;--warn:#ffae63;--err:#ff8e8e;--r:16px}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Arial}
+  header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:#0d1016;position:sticky;top:0;z-index:3}
+  header h1{margin:0;font-size:18px;font-weight:700}
+  nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#121622;cursor:pointer;font-size:13px}
+  .tab.active{background:var(--paper);border-color:#2a3242}
+  .auth{display:flex;gap:8px;align-items:center}
+  .badge{padding:2px 8px;border:1px solid var(--line);border-radius:999px;font-size:11px;color:var(--muted)}
+  main{padding:16px;display:grid;gap:16px}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .item{background:#12151b;border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+  label{display:block;font-size:12px;color:var(--muted);margin:6px 0}
+  input,select,textarea{width:100%;background:#0f131b;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:10px}
+  textarea{min-height:72px;resize:vertical}
+  button{background:#1b2230;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:10px 12px;cursor:pointer}
+  button:hover{background:#222a3b}
+  .btn-primary{background:#243451;border-color:#37527a}
+  .btn-danger{background:#2a1a1a;border-color:#4a2020}
+  .btn-ok{background:#1d2b21;border-color:#284430}
+  .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:11px;color:var(--muted);margin:2px 4px 0 0}
+  .meta{font-size:12px;color:var(--muted)}
+  .hr{height:1px;background:var(--line);margin:10px -16px}
+  .flex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .right{margin-left:auto}
+  .footer{padding:16px;color:var(--muted);font-size:12px;text-align:center}
+  .hidden{display:none}
+  .choice{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .choice .pick{cursor:pointer;border:1px solid var(--line);border-radius:14px;padding:12px;background:#121620}
+  .choice .pick:hover{outline:2px solid #2b3c5f}
+  .pick img{width:100%;height:180px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#0b0d12}
+</style>
+</head>
+<body>
+<header>
+  <div class="flex">
+    <h1>Survigames — <span class="badge">Foro UGC</span></h1>
+  </div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="game">🎮 Juego</button>
+    <button class="tab" data-tab="creator">🧩 Creador</button>
+    <button class="tab" data-tab="packs">📦 Packs</button>
+    <button class="tab" data-tab="about">ℹ️</button>
+  </nav>
+  <div class="auth">
+    <span id="authUser" class="meta">Invitado</span>
+    <button id="btnSignIn">Sign in</button>
+    <button id="btnSignOut" class="hidden">Sign out</button>
+  </div>
+</header>
+
+<main>
+<section id="view-game" class="card">
+  <div class="flex">
+    <h2 style="margin:0">🎮 Elige un pack y juega</h2>
+    <div class="right">
+      <button id="btnRefreshForum">Actualizar</button>
+      <button id="btnLoadForumPack" disabled>Usar pack seleccionado</button>
+      <button id="btnForfeit" disabled>Abandonar</button>
+    </div>
+  </div>
+  <p class="meta">Explora packs públicos, selecciónalo y luego inicia la partida.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin:0 0 8px">Packs públicos</h3>
+      <div class="list" id="forumList"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 8px">Detalle del pack</h3>
+      <div id="forumDetail" class="meta">Selecciona un pack…</div>
+      <div class="hr"></div>
+      <div class="flex">
+        <button id="btnDeletePack" class="btn-danger hidden">Eliminar (soy owner)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <!-- Controles de partida -->
+  <div class="flex" style="margin-bottom:8px">
+    <button class="btn-primary" id="btnStart">▶ Iniciar partida</button>
+    <div class="right">
+      <span class="pill">Ronda: <b id="round">0</b></span>
+      <span class="pill">Score: <b id="score">0</b></span>
+    </div>
+  </div>
+
+  <div id="precheck" class="meta"></div>
+
+  <div id="roundWrap" class="hidden">
+    <div class="meta" style="margin-bottom:6px">
+      Enemigo: <b id="curEnemyName">—</b> (thr:<span id="curEnemyThr">—</span>)
+    </div>
+    <div class="choice">
+      <div class="pick" id="pickA"></div>
+      <div class="pick" id="pickB"></div>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+  <div id="gameLog" style="min-height:80px;white-space:pre-wrap"></div>
+</section>
+
+  <!-- CREATOR -->
+  <section id="view-creator" class="card hidden">
+    <h2 style="margin-top:0">🧩 Creador UGC (local)</h2>
+    <p class="meta">Se guarda <b>solo en tu navegador</b>. Podés exportar/importar JSON. Para publicar al Foro, usá la pestaña Foro (requiere login).</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="margin:0 0 8px">Nueva/Editar entidad</h3>
+        <div class="grid-2">
+          <div>
+            <label>Tipo</label>
+            <select id="fType">
+              <option>INVOCATIONS</option><option>ENEMIES</option><option>ITEMS</option>
+              <option>ABILITIES</option><option>ALLIES</option><option>BOSSES</option>
+            </select>
+          </div>
+          <div>
+            <label>Slug (único)</label>
+            <input id="fSlug" placeholder="raton-electrico" />
+          </div>
+        </div>
+        <label>Nombre</label><input id="fName" placeholder="Nombre visible" />
+        <div class="grid-2">
+          <div><label>Power</label><input id="fPower" type="number" min="0" max="999" /></div>
+          <div><label>Threat (si ENEMIES)</label><input id="fThreat" type="number" min="0" max="999" /></div>
+        </div>
+        <label>Tags (coma)</label><input id="fTags" placeholder="invocado, electrico" />
+        <label>Descripción</label><textarea id="fDesc" rows="2"></textarea>
+        <div class="grid-2">
+          <div><label>Imagen por URL</label><input id="fImgUrl" placeholder="https://..." /></div>
+          <div><label>o Archivo</label><input id="fImgFile" type="file" accept="image/*" /></div>
+        </div>
+        <label><input type="checkbox" id="fRights"> Confirmo derechos sobre el asset</label>
+        <div class="flex" style="margin-top:8px">
+          <button class="btn-ok" id="btnAdd">Guardar</button>
+          <button id="btnReset">Limpiar</button>
+          <span id="formMsg" class="meta"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 8px">Tus entidades</h3>
+        <div class="flex" style="margin-bottom:8px">
+          <button id="btnExport">📤 Exportar JSON</button>
+          <input id="imp" type="file" accept="application/json" class="hidden">
+          <button onclick="document.getElementById('imp').click()">📥 Importar JSON</button>
+          <button class="btn-danger" id="btnClear">🗑 Borrar UGC</button>
+          <span class="right meta">Total: <b id="ugcCount">0</b></span>
+        </div>
+        <div class="list" id="ugcList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PACKS (local) -->
+  <section id="view-packs" class="card hidden">
+    <h2 style="margin:0 0 8px">📦 Packs (local)</h2>
+    <p class="meta">Importá/Exportá packs para compartir manualmente (sin base de datos).</p>
+    <div class="flex">
+      <input id="packsFile" type="file" accept="application/json" class="hidden">
+      <button onclick="document.getElementById('packsFile').click()">📥 Importar pack</button>
+      <button id="btnExportAll">📤 Exportar mis packs (UGC)</button>
+      <span id="packsMsg" class="meta"></span>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3 style="margin:0 0 6px">Formato JSON</h3>
+      <pre class="meta" style="white-space:pre-wrap;background:#0f131b;border:1px solid var(--line);padding:10px;border-radius:12px">
+{ "INVOCATIONS":[...], "ENEMIES":[...], "ITEMS":[...], "ABILITIES":[...], "ALLIES":[...], "BOSSES":[...] }
+      </pre>
+    </div>
+  </section>
+
+
+  <!-- INFO -->
+  <section id="view-about" class="card hidden">
+    <h2 style="margin-top:0">ℹ️ Notas</h2>
+    <ul>
+      <li>Esta edición es <b>UGC</b> + <b>Foro online</b> (Supabase).</li>
+      <li>Este sitio respeta completamente los derechos de autor, ante demanda cualquier pack va aser eliminado.</li>
+      <li>Respetemos los derechos de autor.</li>
+      <li>Este sitio esta regido completamente bajo los packs creados por los usuarios.</li>
+    </ul>
+  </section>
+
+  <div class="footer">© 2025 Survigames — UGC con Foro. Hecho con ❤️</div>
+</main>
+
+<script>
+/* ====== CONFIG SUPABASE ====== */
+const SUPABASE_URL = "https://jrzpqsgjghopnnntxypp.supabase.co";            // ⬅️ poné tu URL
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU";                           // ⬅️ poné tu anon key
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ====== UTIL ====== */
+const TYPES = ["INVOCATIONS","ENEMIES","ITEMS","ABILITIES","ALLIES","BOSSES"];
+const UGC_KEY = "UGC_DB_V1";
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+function toTags(s){ return (s||"").split(",").map(t=>t.trim()).filter(Boolean); }
+function placeholder(text="Imagen", w=480, h=320){
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><rect width='100%' height='100%' fill='#1f2937'/><text x='50%' y='50%' fill='#9ca3af' font-size='22' text-anchor='middle' dominant-baseline='middle'>${text}</text></svg>`;
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
+async function fileToDataUrl(file){
+  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
+}
+
+/* ====== UGC LOCAL ====== */
+function loadUGC(){ try{ return JSON.parse(localStorage.getItem(UGC_KEY)) || {}; }catch{ return {}; } }
+function saveUGC(db){ localStorage.setItem(UGC_KEY, JSON.stringify(db)); }
+async function importUGCFile(file){
+  const txt = await file.text(); const obj = JSON.parse(txt);
+  const db = loadUGC();
+  for(const t of TYPES){
+    if(Array.isArray(obj[t])){
+      const have = new Set((db[t]||[]).map(x=>x.slug));
+      db[t] = [...(db[t]||[]), ...obj[t].filter(x=>x && x.slug && !have.has(x.slug))];
+    }
+  }
+  saveUGC(db);
+}
+function exportUGCFile(){
+  const blob = new Blob([JSON.stringify(loadUGC(),null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob); const a=document.createElement("a");
+  a.href=url; a.download="my-ugc-pack.json"; a.click(); URL.revokeObjectURL(url);
+}
+
+/* ====== CORE VACÍO (monetizable) ====== */
+const CORE = { INVOCATIONS:[], ENEMIES:[], ITEMS:[], ABILITIES:[], ALLIES:[], BOSSES:[] };
+
+/* Merge fuente seleccionada */
+let FORUM_SELECTED = null; // pack seleccionado desde foro
+function getDATA(){
+  if($("#sourceSelect").value === "forum" && FORUM_SELECTED){
+    return sanitizePack(FORUM_SELECTED.content);
+  }
+  const db = loadUGC();
+  const out = {};
+  for(const t of TYPES){
+    const base = CORE[t]||[];
+    const extra = db[t]||[];
+    const bySlug = new Set(); const merged=[];
+    for(const x of [...base, ...extra]){
+      if(!x || !x.slug) continue;
+      if(!bySlug.has(x.slug)){ bySlug.add(x.slug); merged.push(x); }
+    }
+    out[t]=merged;
+  }
+  return out;
+}
+function sanitizePack(p){ // asegura estructura
+  const out={}; for(const t of TYPES) out[t] = Array.isArray(p?.[t])? p[t] : [];
+  return out;
+}
+
+/* ====== UI: Tabs ====== */
+$$(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    $$(".tab").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    const id = btn.dataset.tab;
+    ["game","creator","packs","forum","about"].forEach(v=>$("#view-"+v).classList.toggle("hidden", v!==id));
+    if(id==="creator") renderUGC();
+    if(id==="game") refreshCountsAndRoster();
+    if(id === "game") {
+  refreshForum();  // antes lo llamabas al abrir "Foro"
+  preCheck();      // ya lo tenías
+}
+
+    if(id==="forum") refreshForum();
+  });
+});
+
+/* ====== CREATOR ====== */
+const fType=$("#fType"), fSlug=$("#fSlug"), fName=$("#fName"), fPower=$("#fPower"), fThreat=$("#fThreat"),
+      fTags=$("#fTags"), fDesc=$("#fDesc"), fImgUrl=$("#fImgUrl"), fImgFile=$("#fImgFile"), fRights=$("#fRights"),
+      formMsg=$("#formMsg");
+
+$("#btnAdd").addEventListener("click", async ()=>{
+  if(!fRights.checked){ return setMsg(formMsg,"Debes confirmar derechos.",true); }
+  const type=fType.value, slug=fSlug.value.trim(), name=fName.value.trim();
+  if(!type||!slug||!name) return setMsg(formMsg,"Falta tipo/slug/nombre.",true);
+  const power=fPower.value?Number(fPower.value):null;
+  const threat=fThreat.value?Number(fThreat.value):null;
+  if(type==="ENEMIES" && power==null && threat==null) return setMsg(formMsg,"Si es ENEMIES poné threat o power.",true);
+  let img=fImgUrl.value.trim()||null;
+  if(fImgFile.files[0]){ img = await fileToDataUrl(fImgFile.files[0]).catch(()=>null); if(!img) return setMsg(formMsg,"No se pudo leer imagen.",true); }
+  if(!img) img = placeholder(name);
+
+  const db=loadUGC(); db[type]=db[type]||[];
+  if(db[type].some(x=>x.slug===slug)) return setMsg(formMsg,"Ese slug ya existe.",true);
+
+  const ent={ name, slug, img, tags:toTags(fTags.value), desc:(fDesc.value||undefined) };
+  if(power!=null) ent.power = power;
+  if(type==="ENEMIES" && threat!=null) ent.threat=threat;
+
+  db[type].push(ent); saveUGC(db);
+  setMsg(formMsg,"Guardado ✔"); clearForm(); renderUGC(); refreshCountsAndRoster();
+});
+$("#btnReset").addEventListener("click", clearForm);
+$("#imp").addEventListener("change", async e=>{ const f=e.target.files[0]; if(!f) return;
+  try{ await importUGCFile(f); renderUGC(); refreshCountsAndRoster(); setMsg(formMsg,"Importado ✔"); }
+  catch{ setMsg(formMsg,"Archivo inválido",true); }
+});
+$("#btnClear").addEventListener("click", ()=>{ if(confirm("¿Borrar TODO tu UGC?")){ localStorage.removeItem(UGC_KEY); renderUGC(); refreshCountsAndRoster(); }});
+$("#btnExport").addEventListener("click", exportUGCFile);
+function setMsg(node,txt,err=false){ node.textContent=txt; node.className="meta " + (err?"err":"ok"); setTimeout(()=>node.textContent="",2500); }
+function clearForm(){ [fSlug,fName,fPower,fThreat,fTags,fDesc,fImgUrl].forEach(i=>i.value=""); fImgFile.value=""; fRights.checked=false; }
+function renderUGC(){
+  const db=loadUGC(); let total=0; const el=$("#ugcList"); el.innerHTML="";
+  for(const t of TYPES){
+    const arr=db[t]||[]; if(!arr.length) continue; total+=arr.length;
+    const group=document.createElement("div"); group.innerHTML=`<h4 style="margin:6px 0">${t} <span class="meta">(${arr.length})</span></h4>`;
+    const wrap=document.createElement("div"); wrap.className="list";
+    arr.forEach(x=>{
+      const it=document.createElement("div"); it.className="item";
+      const im=document.createElement("img"); im.src=x.img||placeholder(x.name); it.appendChild(im);
+      const t1=document.createElement("div"); t1.innerHTML=`<b>${x.name}</b><div class="meta">slug: ${x.slug}</div>`; it.appendChild(t1);
+      const meta=document.createElement("div"); meta.innerHTML=`<span class="pill">power:${x.power??"-"}</span> ${t==="ENEMIES"?`<span class="pill">threat:${x.threat??"-"}</span>`:""} ${(x.tags||[]).map(t=>`<span class="pill">${t}</span>`).join("")}`; it.appendChild(meta);
+      const row=document.createElement("div"); row.className="flex";
+      const bE=document.createElement("button"); bE.textContent="Editar";
+      bE.onclick=()=>{ fType.value=t; fSlug.value=x.slug; fName.value=x.name; fPower.value=x.power??""; fThreat.value=t==="ENEMIES"?(x.threat??""):""; fTags.value=(x.tags||[]).join(", "); fDesc.value=x.desc||""; window.scrollTo({top:0,behavior:"smooth"}); };
+      const bD=document.createElement("button"); bD.textContent="Eliminar"; bD.className="btn-danger";
+      bD.onclick=()=>{ const cur=loadUGC(); cur[t]=cur[t].filter(e=>e.slug!==x.slug); saveUGC(cur); renderUGC(); refreshCountsAndRoster(); };
+      row.append(bE,bD); it.appendChild(row); wrap.appendChild(it);
+    });
+    group.appendChild(wrap); el.appendChild(group);
+  }
+  $("#ugcCount").textContent = total;
+}
+
+/* ====== PACKS (local) ====== */
+$("#packsFile").addEventListener("change", async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{ await importUGCFile(f); $("#packsMsg").textContent="Pack importado ✔"; setTimeout(()=>$("#packsMsg").textContent="",2000); refreshCountsAndRoster(); }
+  catch{ $("#packsMsg").textContent="Archivo inválido"; }
+});
+$("#btnExportAll").addEventListener("click", exportUGCFile);
+
+/* ====== GAME ====== */
+const log=$("#gameLog"), roundLbl=$("#round"), scoreLbl=$("#score"), precheck=$("#precheck"),
+      pickA=$("#pickA"), pickB=$("#pickB"), roundWrap=$("#roundWrap"),
+      curEnemyName=$("#curEnemyName"), curEnemyThr=$("#curEnemyThr");
+
+let GAME={ running:false, round:0, score:0, pool:[], enemies:[], items:[] };
+
+
+$("#btnStart").addEventListener("click", () => {
+  if (!FORUM_SELECTED) {
+    return alert("Primero selecciona un pack de la lista y pulsa “Usar pack seleccionado”.");
+  }
+  const D = sanitizePack(FORUM_SELECTED.content);
+  if ((D.INVOCATIONS?.length || 0) < 2) return alert("El pack debe tener al menos 2 invocations.");
+  if ((D.ENEMIES?.length || 0) < 1) return alert("El pack debe tener al menos 1 enemy.");
+
+  GAME.running = true; GAME.round = 0; GAME.score = 0;
+  GAME.pool    = shuffle([...D.INVOCATIONS]);
+  GAME.enemies = shuffle([...D.ENEMIES]);
+  GAME.items   = shuffle([...D.ITEMS]);
+  log.textContent = "Partida iniciada. Elegí uno por ronda.\n";
+  $("#btnForfeit").disabled = false;
+  nextRound();
+});
+
+
+$("#btnForfeit").addEventListener("click", ()=>{
+  GAME.running=false; $("#btnForfeit").disabled=true; roundWrap.classList.add("hidden");
+  log.textContent += "\nHas abandonado la partida.\n";
+});
+
+function nextRound(){
+  if(!GAME.running) return;
+  GAME.round++;
+  if(GAME.pool.length<2){ endGame("Sin suficientes invocaciones para continuar."); return; }
+
+  // Enemigo de esta ronda (rotativo)
+  if(GAME.enemies.length===0) GAME.enemies = shuffle([...getDATA().ENEMIES]);
+  const enemy = GAME.enemies.shift();
+  const thr = enemy.threat!=null ? enemy.threat : (enemy.power||0);
+  curEnemyName.textContent = enemy.name; curEnemyThr.textContent = String(thr);
+
+  // Dos candidatos (salen del frente)
+  const A = GAME.pool.shift();
+  const B = GAME.pool.shift();
+
+  // Render picks
+  renderPick(pickA, A);
+  renderPick(pickB, B);
+
+  const choose = async (who)=>{
+    // ítem opcional con 40% prob
+    let bonus = 0, itemTxt="";
+    if(Math.random()<0.4 && GAME.items.length){
+      const it = GAME.items.shift();
+      bonus = it.power||0; itemTxt = ` + ${it.name} (pwr ${bonus})`;
+    }
+    const pwr = (who.power||0) + bonus;
+    const delta = pwr - thr;
+    GAME.score += Math.max(-3, Math.min(5, delta)); // clamp
+    log.textContent += `Ronda ${GAME.round}: enemigo ${enemy.name} (thr ${thr}). Elegiste ${who.name}${itemTxt} (pwr ${pwr}). ${delta>=0?"Ganaste":"Perdiste"} (Δ ${delta}).\n`;
+
+    // rotación: el elegido vuelve al final de la cola; el otro se descarta
+    GAME.pool.push(who);
+
+    // Condiciones de fin sencillas
+    if(GAME.round>=10 || GAME.score<=-10){ endGame(GAME.score>0? "🏆 ¡Victoria por puntaje!":"💀 Fin de la partida"); return; }
+    nextRound();
+  };
+
+  pickA.onclick = ()=> choose(A);
+  pickB.onclick = ()=> choose(B);
+
+  roundLbl.textContent = String(GAME.round);
+  scoreLbl.textContent = String(GAME.score);
+  roundWrap.classList.remove("hidden");
+  refreshCountsAndRoster();
+}
+function endGame(msg){
+  GAME.running=false; $("#btnForfeit").disabled=true; roundWrap.classList.add("hidden");
+  log.textContent += `\n${msg}\n`;
+}
+function renderPick(node, ent){
+  node.innerHTML = `
+    <img src="${ent.img||placeholder(ent.name)}" alt="">
+    <div><b>${ent.name}</b></div>
+    <div class="meta">power: ${ent.power??0} ${(ent.tags||[]).map(t=>`<span class="pill">${t}</span>`).join("")}</div>
+    <div class="meta">${ent.desc||""}</div>
+  `;
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* Conteos + Roster */
+function refreshCountsAndRoster(){
+  const D=getDATA();
+  $("#cInv").textContent=D.INVOCATIONS.length;
+  $("#cEn").textContent=D.ENEMIES.length;
+  $("#cIt").textContent=D.ITEMS.length;
+  $("#countAll").textContent=TYPES.reduce((n,t)=>n+(D[t]?.length||0),0);
+  const roster=$("#roster"); roster.innerHTML="";
+  [...D.ENEMIES.slice(0,6), ...D.INVOCATIONS.slice(0,6), ...D.ITEMS.slice(0,6)].forEach(x=>{
+    const it=document.createElement("div"); it.className="item";
+    it.innerHTML=`<img src="${x.img||placeholder(x.name)}"/><b>${x.name}</b><div class="meta">slug:${x.slug}</div>`;
+    roster.appendChild(it);
+  });
+}
+refreshCountsAndRoster();
+
+/* ====== AUTH ====== */
+const authUser=$("#authUser"), btnSignIn=$("#btnSignIn"), btnSignOut=$("#btnSignOut"), btnPublish=$("#btnPublish");
+supabase.auth.onAuthStateChange((_event, session)=>{ updateAuth(session?.user||null); });
+
+async function signIn(){
+  const email = prompt("Tu email para Magic Link:");
+  if (!email) return;
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin } // agrega esta URL en Auth → URL Configuration
+    });
+    if (error) alert(error.message);
+    else alert("Te envié un enlace de acceso. Revisa tu correo.");
+  } catch (e) {
+    alert(e.message || "Error al enviar Magic Link");
+  }
+}
+
+async function signOut(){ await supabase.auth.signOut(); }
+btnSignIn.onclick = signIn; btnSignOut.onclick = signOut;
+
+function updateAuth(user){
+  if(user){ authUser.textContent = user.email || (user.user_metadata?.full_name||"Usuario"); btnSignIn.classList.add("hidden"); btnSignOut.classList.remove("hidden"); btnPublish.classList.remove("hidden"); }
+  else{ authUser.textContent="Invitado"; btnSignIn.classList.remove("hidden"); btnSignOut.classList.add("hidden"); btnPublish.classList.add("hidden"); }
+}
+
+/* ====== FORO (packs online) ====== */
+const forumList=$("#forumList"), forumDetail=$("#forumDetail"), btnRefreshForum=$("#btnRefreshForum"),
+      btnLoadForumPack=$("#btnLoadForumPack"), btnDeletePack=$("#btnDeletePack");
+
+btnRefreshForum.onclick = refreshForum;
+async function refreshForum(){
+  forumList.innerHTML="Cargando…";
+  const { data, error } = await supabase.from("Packs").select("id, slug, title, author, description, created_at").eq("visibility","public").order("created_at",{ascending:false}).limit(50);
+  if(error){ forumList.innerHTML=`<div class="meta err">${error.message}</div>`; return; }
+  forumList.innerHTML="";
+  data.forEach(p=>{
+    const card=document.createElement("div"); card.className="item";
+    card.innerHTML=`<b>${p.title}</b><div class="meta">por ${p.author||"Anónimo"}</div><div class="meta">${p.description||""}</div><div class="meta">slug: ${p.slug}</div>`;
+    const b=document.createElement("button"); b.textContent="Ver"; b.onclick=()=>selectForumPack(p.id);
+    card.appendChild(b); forumList.appendChild(card);
+  });
+}
+
+btnLoadForumPack.onclick = () => {
+  if (!FORUM_SELECTED) return;
+  alert("Pack cargado. Ahora pulsa ▶ Iniciar partida.");
+};
+
+async function selectForumPack(id){
+  const { data, error } = await supabase.from("Packs").select("*").eq("id", id).single();
+  if(error){ forumDetail.innerHTML=`<div class="err">${error.message}</div>`; return; }
+  FORUM_SELECTED = data;
+  const cnt = sanitizePack(data.content);
+  forumDetail.innerHTML = `
+    <div><b>${data.title}</b> <span class="meta">por ${data.author||"Anónimo"} — slug: ${data.slug}</span></div>
+    <div class="meta">INV:${cnt.INVOCATIONS.length} ENE:${cnt.ENEMIES.length} IT:${cnt.ITEMS.length}</div>
+    <div class="hr"></div>
+    <div class="list">${[...cnt.INVOCATIONS.slice(0,4), ...cnt.ENEMIES.slice(0,4)].map(x=>`
+      <div class="item"><img src="${x.img||placeholder(x.name)}"/><b>${x.name}</b><div class="meta">slug:${x.slug}</div></div>
+    `).join("")}</div>
+  `;
+  btnLoadForumPack.disabled=false;
+
+  // toggle delete si soy owner
+  supabase.auth.getUser().then(({data:{user}})=>{
+    const isOwner = user && data.owner === user.id;
+    btnDeletePack.classList.toggle("hidden", !isOwner);
+    btnDeletePack.onclick = ()=>deletePack(data.id);
+  });
+}
+btnLoadForumPack.onclick = ()=>{
+  if(!FORUM_SELECTED) return;
+  $("#sourceSelect").value="forum";
+  alert("Pack del foro cargado. Ve a Juego > Iniciar.");
+};
+
+async function deletePack(id){
+  if(!confirm("¿Eliminar este pack?")) return;
+  const { error } = await supabase.from("Packs").delete().eq("id", id);
+  if(error) return alert(error.message);
+  FORUM_SELECTED=null; forumDetail.innerHTML="Selecciona un pack…"; btnLoadForumPack.disabled=true;
+  refreshForum();
+}
+
+/* Publicar pack desde UGC local */
+btnPublish.onclick = async ()=>{
+  const session = (await supabase.auth.getSession()).data.session;
+  if(!session) return alert("Necesitás iniciar sesión.");
+  const title = prompt("Título del pack:");
+  if(!title) return;
+  const slug = prompt("Slug único (ej. pack-de-carlos):");
+  if(!slug) return;
+
+  const content = loadUGC();
+  // validaciones mínimas
+  if(!Array.isArray(content.INVOCATIONS) || content.INVOCATIONS.length<1) return alert("Tu pack debe tener al menos 1 Invocation.");
+  if(!Array.isArray(content.ENEMIES) || content.ENEMIES.length<1) return alert("Tu pack debe tener al menos 1 Enemy.");
+
+  const author = session.user.email || session.user.user_metadata?.full_name || "Anónimo";
+  const row = { slug, title, author, description:"Pack publicado desde UGC local", content, visibility:"public", owner: session.user.id };
+  const { error } = await supabase.from("Packs").insert(row);
+  if(error){ alert(error.message); return; }
+  alert("¡Publicado! Aparecerá en el Foro público.");
+  refreshForum();
+};
+
+/* ====== PRE-CHECK juego ====== */
+function preCheck(){
+  const D=getDATA();
+  const msgs=[];
+  if(D.INVOCATIONS.length<2) msgs.push("⚠️ Agrega al menos 2 INVOCATIONS.");
+  if(D.ENEMIES.length<1) msgs.push("⚠️ Agrega al menos 1 ENEMY.");
+  precheck.innerHTML = msgs.length? msgs.map(m=>`<div>${m}</div>`).join("") : "<span class='ok'>Listo para jugar.</span>";
+}
+preCheck();
+$("#sourceSelect").addEventListener("change", preCheck);
+</script>
+</body>
+</html>
