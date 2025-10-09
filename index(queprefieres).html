@@ -478,9 +478,66 @@ B) ${current.b}`;
       show('play');
     })();
 
+    // === LOGIN SYSTEM ===
+
+// Referencias a los botones
+const btnSignIn = document.getElementById('btnSignIn');
+const btnSignOut = document.getElementById('btnSignOut');
+const authUser = document.getElementById('authUser');
+
+// --- FUNCIÓN DE LOGIN ---
+btnSignIn.addEventListener('click', async () => {
+  const email = prompt("📧 Ingresa tu correo para iniciar sesión:");
+
+  if (!email) return alert("Debes ingresar un correo.");
+
+  const { error } = await sb.auth.signInWithOtp({
+    email: email,
+    options: {
+      emailRedirectTo: "https://luiskq1225-dotcom.github.io/survigames/"
+  // vuelve a tu sitio
+    }
+  });
+
+  if (error) {
+    alert("Error al enviar el enlace: " + error.message);
+  } else {
+    alert("📩 Te enviamos un enlace mágico a tu correo. Revisa tu bandeja!");
+  }
+});
+
+// --- FUNCIÓN DE LOGOUT ---
+btnSignOut.addEventListener('click', async () => {
+  const { error } = await sb.auth.signOut();
+  if (error) alert("Error al cerrar sesión: " + error.message);
+});
+
+// --- ACTUALIZAR UI ---
+sb.auth.onAuthStateChange((_event, session) => {
+  const user = session?.user;
+  if (user) {
+    authUser.textContent = user.email;
+    btnSignIn.classList.add('hidden');
+    btnSignOut.classList.remove('hidden');
+  } else {
+    authUser.textContent = 'Invitado';
+    btnSignIn.classList.remove('hidden');
+    btnSignOut.classList.add('hidden');
+  }
+});
+
+// Revisar si ya está logueado al cargar la página
+(async () => {
+  const { data } = await sb.auth.getSession();
+  const user = data?.session?.user;
+  if (user) {
+    authUser.textContent = user.email;
+    btnSignIn.classList.add('hidden');
+    btnSignOut.classList.remove('hidden');
+  }
+})();
 
 
  </script>
 </body>
 </html>
-
