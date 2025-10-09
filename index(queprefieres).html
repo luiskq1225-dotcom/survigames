@@ -93,13 +93,18 @@
         <div class="logo" aria-hidden="true"></div>
         <h1>¿Qué prefieres?</h1>
       </div>
-      <nav>
-        <a class="btn alt" href="index.html">Volver al menú</a>
-        <button id="navPlay">Jugar</button>
-        <button id="navCreate">Crear</button>
-        <button id="navFeed">Explorar</button>
-        <button id="navLogin" class="primary"></button>
-      </nav>
+    <nav>
+      <button id="navPlay">Jugar</button>
+      <button id="navCreate">Crear</button>
+      <button id="navFeed">Explorar</button>
+
+      <div class="auth">
+        <span id="authUser" class="meta">Invitado</span>
+        <button id="btnSignIn" class="primary">Iniciar sesión</button>
+        <button id="btnSignOut" class="hidden">Salir</button>
+      </div>
+    </nav>
+
     </header>
 
     <!-- HOME / PLAY -->
@@ -192,6 +197,7 @@
       Hecho con ❤️ para prototipo. Votos, usuario e imágenes (base64/URL) guardados en <strong>localStorage</strong>.
     </footer>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
     /*********************************
@@ -200,10 +206,62 @@
     const DB_KEY = 'qp_db_v2_images';
     const USER_KEY = 'qp_user_v1';
 
+    // ====== CONFIGURACIÓN SUPABASE ======
+    const SUPABASE_URL = "https://jrzpqsgjghopnnntxypp.supabase.co"; // tu URL real
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU";
 
-    const SUPABASE_URL = "https://jrzpqsgjghopnnntxypp.supabase.co"
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU"
+    // Crear el cliente global de Supabase
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // ====== AUTENTICACIÓN (SUPABASE) ======
+    const AUTH_REDIRECT = window.location.origin;
+    let CURRENT_USER = null;
+
+    function setAuthUI(user) {
+      const elUser = document.getElementById("authUser");
+      const btnIn = document.getElementById("btnSignIn");
+      const btnOut = document.getElementById("btnSignOut");
+
+      if (user) {
+        elUser.textContent = user.email || "Usuario";
+        btnIn.classList.add("hidden");
+        btnOut.classList.remove("hidden");
+      } else {
+        elUser.textContent = "Invitado";
+        btnIn.classList.remove("hidden");
+        btnOut.classList.add("hidden");
+      }
+    }
+
+    // Obtener sesión actual al cargar
+    supabase.auth.getSession().then(({ data }) => {
+      CURRENT_USER = data?.session?.user || null;
+      setAuthUI(CURRENT_USER);
+    });
+
+    // Escuchar cambios en sesión (login/logout)
+    supabase.auth.onAuthStateChange((_event, session) => {
+      CURRENT_USER = session?.user || null;
+      setAuthUI(CURRENT_USER);
+    });
+
+    // Botón de login con Magic Link (email)
+    document.getElementById("btnSignIn")?.addEventListener("click", async () => {
+      const email = prompt("Tu email para ingresar:");
+      if (!email) return;
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: AUTH_REDIRECT },
+      });
+      if (error) alert(error.message);
+      else alert("Te envié un enlace de acceso. Revisa tu correo ✉️");
+    });
+
+    // Botón de logout
+    document.getElementById("btnSignOut")?.addEventListener("click", async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) alert(error.message);
+    });
 
     function loadDB() {
       const raw = localStorage.getItem(DB_KEY);
@@ -252,14 +310,8 @@
     $('#navPlay').onclick = () => show('play');
     $('#navCreate').onclick = () => show('create');
     $('#navFeed').onclick = () => show('feed');
-    $('#navLogin').onclick = () => show('login');
-
-    function updateNav(){
-      const u = getUser();
-      $('#navLogin').textContent = u ? `👤 ${u.nick}` : 'Iniciar sesión';
-      const authState = $('#authState');
-      if (authState) authState.textContent = u ? `Sesión local: ${u.nick}` : 'Sin sesión';
-    }
+ 
+    
 
     // LOGIN
     $('#setNick').onclick = () => {
@@ -431,5 +483,4 @@ B) ${current.b}`;
  </script>
 </body>
 </html>
-
 
