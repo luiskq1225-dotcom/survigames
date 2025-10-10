@@ -260,62 +260,11 @@
       <span>© 2025 Luks Sage</span>
     </div>
   </footer>
-  <!-- 🔹 LOGIN CON SUPABASE -->
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// ⚙️ Configuración de tu proyecto Supabase
-const supabaseUrl = "https://jrzpgsgjjhopnnntypp.supabase.co"; // <- tu URL real
-const supabaseKey = "TU_PUBLIC_ANON_KEY"; // 🔒 reemplaza con tu public anon key
-const sb = createClient(supabaseUrl, supabaseKey);
-
-// 🔸 Elementos del DOM
-const btnSignIn = document.getElementById("btnSignIn");
-const inputEmail = document.getElementById("emailInput");
-
-// 🔸 Evento para enviar el Magic Link
-btnSignIn.addEventListener("click", async () => {
-  const email = inputEmail.value.trim();
-  if (!email) {
-    alert("⚠️ Debes ingresar un correo electrónico.");
-    return;
-  }
-
-  // Enviamos el link de acceso mágico
-  const { error } = await sb.auth.signInWithOtp({
-    email: email,
-    options: {
-      emailRedirectTo: "https://luiskq1225-dotcom.github.io/survigames/index(menu).html"
-    },
-  });
-
-  if (error) {
-    alert("❌ Error al enviar el enlace: " + error.message);
-  } else {
-    alert("📩 Te enviamos un enlace mágico a tu correo. Revisa tu bandeja!");
-  }
-});
-
-// 🔸 Verificamos si ya hay una sesión activa
-sb.auth.getUser().then(({ data, error }) => {
-  if (data.user) {
-    console.log("Usuario autenticado:", data.user.email);
-    document.getElementById("loginSection").style.display = "none";
-    document.getElementById("welcomeSection").style.display = "block";
-    document.getElementById("userEmail").textContent = data.user.email;
-  }
-});
-
-// 🔸 Cerrar sesión
-document.getElementById("btnSignOut").addEventListener("click", async () => {
-  await sb.auth.signOut();
-  alert("👋 Sesión cerrada correctamente");
-  window.location.reload();
-});
-</script>
 
 </body>
 </html>
+
 
 
 
