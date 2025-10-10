@@ -87,6 +87,20 @@
   </style>
 </head>
 <body>
+
+  <script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const sb = createClient("https://TU_URL.supabase.co", "TU_PUBLIC_ANON_KEY");
+
+// Verificar si hay usuario logueado
+const { data, error } = await sb.auth.getUser();
+
+if (error || !data.user) {
+  window.location.href = "index(menu).html"; // Redirige si no hay sesión
+}
+</script>
+
   <div class="app">
     <header>
       <div class="brand">
@@ -97,7 +111,6 @@
       <button id="navPlay">Jugar</button>
       <button id="navCreate">Crear</button>
       <button id="navFeed">Explorar</button>
-      <a class="btn alt" href="index.html">Volver al menú</a>
 
       <div class="auth">
         <span id="authUser" class="meta">Invitado</span>
@@ -246,23 +259,6 @@
       setAuthUI(CURRENT_USER);
     });
 
-    // Botón de login con Magic Link (email)
-    document.getElementById("btnSignIn")?.addEventListener("click", async () => {
-      const email = prompt("Tu email para ingresar:");
-      if (!email) return;
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: AUTH_REDIRECT },
-      });
-      if (error) alert(error.message);
-      else alert("Te envié un enlace de acceso. Revisa tu correo ✉️");
-    });
-
-    // Botón de logout
-    document.getElementById("btnSignOut")?.addEventListener("click", async () => {
-      const { error } = await supabase.auth.signOut();
-      if (error) alert(error.message);
-    });
 
     function loadDB() {
       const raw = localStorage.getItem(DB_KEY);
@@ -495,7 +491,8 @@ btnSignIn.addEventListener('click', async () => {
   const { error } = await sb.auth.signInWithOtp({
     email: email,
     options: {
-      emailRedirectTo: "https://luiskq1225-dotcom.github.io/survigames/index(queprefieres).html"
+    emailRedirectTo: "https://luiskq1225-dotcom.github.io/survigames/"
+
   // vuelve a tu sitio
     }
   });
@@ -507,11 +504,6 @@ btnSignIn.addEventListener('click', async () => {
   }
 });
 
-// --- FUNCIÓN DE LOGOUT ---
-btnSignOut.addEventListener('click', async () => {
-  const { error } = await sb.auth.signOut();
-  if (error) alert("Error al cerrar sesión: " + error.message);
-});
 
 // --- ACTUALIZAR UI ---
 sb.auth.onAuthStateChange((_event, session) => {
@@ -542,5 +534,6 @@ sb.auth.onAuthStateChange((_event, session) => {
  </script>
 </body>
 </html>
+
 
 
