@@ -132,6 +132,13 @@
               <option>INVOCATIONS</option><option>ENEMIES</option><option>ITEMS</option>
               <option>ABILITIES</option><option>ALLIES</option><option>BOSSES</option>
             </select>
+            <div class="card" style="margin-top:16px; text-align:center;">
+            <h3 style="margin:0 0 8px">🌍 Publicar tu pack al Foro</h3>
+            <p class="meta">Sube tu pack a la base de datos pública de Survigames para que todos puedan jugarlo.</p>
+            <button id="btnPublish" class="btn-primary">📤 Publicar al público</button>
+            <div id="publishMsg" class="meta" style="margin-top:8px;"></div>
+          </div>
+
           </div>
           <div>
             <label>Slug (único)</label>
@@ -466,7 +473,53 @@ refreshCountsAndRoster();
 
 /* ====== AUTH ====== */
 const authUser=$("#authUser"), btnSignIn=$("#btnSignIn"), btnSignOut=$("#btnSignOut"), btnPublish=$("#btnPublish");
-supabase.auth.onAuthStateChange((_event, session)=>{ updateAuth(session?.user||null); });
+
+
+async function updateAuthUI() {
+  const { data } = await supabase.auth.getUser();
+  const user = data?.user;
+
+  if (user) {
+    const email = user.email || user.user_metadata?.full_name || "Usuario";
+    authUser.textContent = `🟢 ${email}`;
+    btnSignIn.classList.add("hidden");
+    btnSignOut.classList.remove("hidden");
+  } else {
+    authUser.textContent = "🔴 Invitado";
+    btnSignIn.classList.remove("hidden");
+    btnSignOut.classList.add("hidden");
+  }
+}
+
+// Sign in con magic link
+btnSignIn.addEventListener("click", async () => {
+  const email = prompt("Tu email para Magic Link:");
+  if (!email) return;
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.origin }
+  });
+
+  if (error) alert(error.message);
+  else alert("📩 Te envié un enlace de acceso. Revisa tu correo.");
+});
+
+// Sign out
+btnSignOut.addEventListener("click", async () => {
+  await supabase.auth.signOut();
+  updateAuthUI();
+});
+
+// Escucha cambios de sesión
+supabase.auth.onAuthStateChange((_event, session) => {
+  updateAuthUI();
+});
+
+// Al iniciar la página, chequea sesión
+updateAuthUI();
+
+
 
 async function signIn(){
   const email = prompt("Tu email para Magic Link:");
@@ -627,3 +680,4 @@ $("#sourceSelect").addEventListener("change", preCheck);
 
 </body>
 </html>
+
