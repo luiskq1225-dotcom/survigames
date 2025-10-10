@@ -44,12 +44,22 @@
 </style>
 </head>
 <body>
+
+
+<form id="formPack">
+  <input type="text" id="titulo" placeholder="Título del pack" required />
+  <textarea id="descripcion" placeholder="Descripción"></textarea>
+  <textarea id="contenido" placeholder='Contenido JSON (ej: {"nivel":1})'></textarea>
+  <button type="submit">Guardar Pack</button>
+</form>
+
+<div id="resultado"></div>
+
 <header>
   <div class="flex">
     <h1>Survigames — <span class="badge">Foro UGC</span></h1>
   </div>
   <nav class="tabs">
-    <a class="btn alt" href="index.html">Volver al menú</a>
     <button class="tab active" data-tab="game">🎮 Juego</button>
     <button class="tab" data-tab="creator">🧩 Creador</button>
     <button class="tab" data-tab="packs">📦 Packs</button>
@@ -581,7 +591,45 @@ function preCheck(){
 }
 preCheck();
 $("#sourceSelect").addEventListener("change", preCheck);
+
 </script>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+  const supabaseUrl = "https://jrzpqsgjghopnnntxypp.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU";
+  const sb = createClient(supabaseUrl, supabaseKey);
+
+  const form = document.getElementById("formPack");
+  const resultado = document.getElementById("resultado");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const titulo = document.getElementById("titulo").value;
+    const descripcion = document.getElementById("descripcion").value;
+    const contenido = document.getElementById("contenido").value;
+
+    const { data, error } = await sb
+      .from("Packs")
+      .insert([
+        {
+          title: titulo,
+          description: descripcion,
+          content: JSON.parse(contenido),
+          visibility: "public",
+          author: "usuario_demo", // después lo cambiamos por el user logueado
+        },
+      ]);
+
+    if (error) {
+      resultado.textContent = "❌ Error: " + error.message;
+    } else {
+      resultado.textContent = "✅ Pack guardado con éxito!";
+      form.reset();
+    }
+  });
+</script>
+
 </body>
 </html>
-
