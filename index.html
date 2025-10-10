@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Survigames — Historia 50/50</title>
 <style>
+
+  #gallery img {
+    transition: opacity 0.8s ease-in-out;
+    border-radius: 8px;
+  }
+
   :root{
     --bg:#0b0e14;--card:#121725;--muted:#9aa4b2;--text:#e6e6e6;--primary:#7c5cff;--accent:#00d3a7;--stroke:#212843;
     --shadow:0 16px 40px rgba(0,0,0,.45);
@@ -121,8 +127,8 @@
         <div class="cta">
         <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap;">
           <a href="indexjuego.html" class="btn">🎮 Modo Historia 50/50</a>
-          <a href="indexUgc.html" class="btn alt">🧩 UGC</a>
-          <a href="indexquePrefieres.html" class="btn alt">🤔 ¿Qué prefieres?</a>
+          <a href="indexUgC.html" class="btn alt">🧩 UGC</a>
+          <a href="indexqueprefieres.html" class="btn alt">🤔 ¿Qué prefieres?</a>
           <a class="btn alt" href="#info">Leer más</a>
         </div>
         <div class="kpis">
@@ -185,15 +191,16 @@
 
     <!-- CARDS / CAPTURAS -->
 
-    <section>
-      <h3 style="margin:6px 0 12px">Capturas</h3>
-      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
-        <div class="card"><div class="thumb"><img src="https://static0.cbrimages.com/wordpress/wp-content/uploads/2019/10/Sasuke-Uchiha-Rinnegan-Users.jpg?w=1600&h=900&fit=crop" alt=""></div></div>
-        <div class="card"><div class="thumb"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwB971m8RoBCE0N05t_AbTuN_3lg-_wvmIUQ&s" alt=""></div></div>
-        <div class="card"><div class="thumb"><img src="https://alfabetajuega.com/hero/2023/06/una-recopilacion-con-la-altura-de-algunos-de-los-titanes-mas-resaltantes-de-shingeki-no-kyojin.jpg?width=1200&aspect_ratio=16:9" alt=""></div></div>
-        <div class="card"><div class="thumb"><img src="https://m.media-amazon.com/images/I/71s+dCzA55L._AC_SL1500_.jpg" alt=""></div></div>
-      </div>
-    </section>
+<section id="captures">
+  <h3 style="margin:6px 0 12px">Capturas</h3>
+  <div class="grid" id="gallery" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+    <div class="card"><div class="thumb"><img src="https://static0.cbrimages.com/wordpress/wp-content/uploads/2019/10/Sasuke-Uchiha-Rinnegan-Users.jpg" alt=""></div></div>
+    <div class="card"><div class="thumb"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwB971m8RoBCE0N05t_AbTuN_3lg-_wvmIUQ&s" alt=""></div></div>
+    <div class="card"><div class="thumb"><img src="https://alfabetajuega.com/hero/2023/06/una-recopilacion-con-la-altura-de-algunos-de-los-titanes-mas-resaltantes-de-shingeki-no-kyojin.jpg?width=1200&aspect_ratio=16:9" alt=""></div></div>
+    <div class="card"><div class="thumb"><img src="https://static.wikia.nocookie.net/zelda/images/5/5e/Espada_Maestra_HW.png/revision/latest?cb=20141013160728&path-prefix=es" alt=""></div></div>
+  </div>
+</section>
+
 
     <!-- POLÍTICA DE PRIVACIDAD -->
     <section id="privacy" class="grid cols-2">
@@ -337,11 +344,51 @@
     </div>
   </footer>
 
+<script>
+  // 🎞️ Galería de imágenes automáticas
+  const imageSets = [
+    [
+      "https://static0.cbrimages.com/wordpress/wp-content/uploads/2019/10/Sasuke-Uchiha-Rinnegan-Users.jpg",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwB971m8RoBCE0N05t_AbTuN_3lg-_wvmIUQ&s",
+      "https://alfabetajuega.com/hero/2023/06/una-recopilacion-con-la-altura-de-algunos-de-los-titanes-mas-resaltantes-de-shingeki-no-kyojin.jpg?width=1200&aspect_ratio=16:9",
+      "https://static.wikia.nocookie.net/zelda/images/5/5e/Espada_Maestra_HW.png/revision/latest?cb=20141013160728&path-prefix=es"
+    ],
+    [
+      "https://static.wikia.nocookie.net/aobuta/images/d/d8/Mai_Sakurajima_Anime_-_Screenshot_1.png/revision/latest?cb=20181016030235",
+      "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2022/10/terra.jpg",
+      "https://amyscrypt.com/wp-content/uploads/2021/01/Haunted-Amber-Court-5-1024x682.jpg",
+      "https://alfabetajuega.com/hero/2024/04/chainsaw-man-sorprende-con-esta-revelacion-de-la-identidad-secreta-de-denji.jpg?width=768&aspect_ratio=16:9&format=nowebp"
+    ],
+    [
+      "https://cdn.britannica.com/77/191677-050-3CBF2834/Capybara.jpg",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIhg8PdUmLPZjh_X9Os-NiyCaPUsQH_K5_9Q&s",
+      "https://cdn.theatlantic.com/thumbor/H4UQQ6T6Kl9EmOdk7aZWCYUHhLc=/348x0:2481x1200/1600x900/media/img/mt/2019/05/rev_1_GKM_FP_201r_High_Res_JPEG/original.jpg",
+      "https://www.pluggedin.com/wp-content/uploads/2020/01/minecraft-review-image-1024x587.jpg"
+    ]
+  ];
+
+  const gallery = document.querySelectorAll("#gallery img");
+  let currentSet = 0;
+
+  function fadeSwap(images, newSrcs) {
+    images.forEach((img, i) => {
+      img.style.transition = "opacity 0.8s ease";
+      img.style.opacity = 0;
+      setTimeout(() => {
+        img.src = newSrcs[i];
+        img.style.opacity = 1;
+      }, 800);
+    });
+  }
+
+  setInterval(() => {
+    currentSet = (currentSet + 1) % imageSets.length;
+    fadeSwap(gallery, imageSets[currentSet]);
+  }, 5000); // ⏱️ cambia cada 5 segundos
+</script>
 
 </body>
 </html>
-
-
 
 
 
