@@ -71,6 +71,19 @@
 </head>
 <body>
 
+  <section id="loginSection">
+  <h2>Iniciar sesión</h2>
+  <input type="email" id="emailInput" placeholder="Ingresa tu correo" />
+  <button id="btnSignIn">Enviar enlace mágico</button>
+</section>
+
+<section id="welcomeSection" style="display:none;">
+  <h2>Bienvenido</h2>
+  <p id="userEmail"></p>
+  <button id="btnSignOut">Cerrar sesión</button>
+</section>
+
+
   <!-- TOP NAV -->
   <div class="topbar">
     <div class="wrap row">
@@ -82,9 +95,7 @@
         <a href="#captures">Capturas</a>
         <a href="#privacy">Privacidad</a>
         <a href="#contact">Contacto</a>
-        <a class="btn" href="index(juego.html">▶️ Jugar 50/50</a>
-        <a class="btn" href="index(queprefieres).html">▶️ Jugar Prefieres?</a>
-        <a class="btn" href="index.(UgC.html">▶️ Jugar Ugc</a>
+        <a class="btn" href="PAginaeleccion.html">Jugar</a>
       </nav>
     </div>
   </div>
@@ -100,9 +111,7 @@
           derriba a dos jefes finales. Los números se revelan al elegir; los <b>tags</b> guían tus sinergias.
         </p>
         <div class="cta">
-          <a class="btn" href="index(juego.html">▶️ Jugar 50/50</a>
-          <a class="btn" href="index(queprefieres).html">▶️ Jugar Prefieres?</a>
-          <a class="btn" href="index.(UgC.html">▶️ Jugar Ugc</a>
+          <a class="btn" href="https://luiskq1225-dotcom.github.io/survigames/">▶️ Jugar ahora</a>
           <a class="btn alt" href="#info">Leer más</a>
         </div>
         <div class="kpis">
@@ -149,7 +158,7 @@
         <div class="card"><div class="thumb"><img src="https://static0.cbrimages.com/wordpress/wp-content/uploads/2019/10/Sasuke-Uchiha-Rinnegan-Users.jpg?w=1600&h=900&fit=crop" alt=""></div></div>
         <div class="card"><div class="thumb"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwB971m8RoBCE0N05t_AbTuN_3lg-_wvmIUQ&s" alt=""></div></div>
         <div class="card"><div class="thumb"><img src="https://alfabetajuega.com/hero/2023/06/una-recopilacion-con-la-altura-de-algunos-de-los-titanes-mas-resaltantes-de-shingeki-no-kyojin.jpg?width=1200&aspect_ratio=16:9" alt=""></div></div>
-        <div class="card"><div class="thumb"><img src="https://oyster.ignimgs.com/mediawiki/apis.ign.com/mortal-kombat-10/d/d2/Raidenmkx.jpg" alt=""></div></div>
+        <div class="card"><div class="thumb"><img src="https://static.wikia.nocookie.net/zelda/images/5/5e/Espada_Maestra_HW.png/revision/latest?cb=20141013160728&path-prefix=es" alt=""></div></div>
       </div>
     </section>
 
@@ -209,7 +218,7 @@
             <li>Si es material propio, autor y permiso de uso.</li>
           </ul>
           <p>
-            Escríbenos a <a class="btn alt" href="mailto:lukssagequirosmendez@gmail.com">lukssagequirosmendez@gmail.com</a>  
+            Escríbenos a <a class="btn alt" href="mailto:lukssagequirosmendez@gmail.com">tucorreo@dominio.com</a>  
             — asunto: <b>“Propuesta Survigames”</b>.
           </p>
           <p class="muted">Nota: revisamos propuestas por lotes para mantener el balance del juego.</p>
@@ -248,13 +257,62 @@
       <span>© 2025 Luks Sage</span>
     </div>
   </footer>
+  <!-- 🔹 LOGIN CON SUPABASE -->
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+// ⚙️ Configuración de tu proyecto Supabase
+const supabaseUrl = "https://jrzpgsgjjhopnnntypp.supabase.co"; // <- tu URL real
+const supabaseKey = "TU_PUBLIC_ANON_KEY"; // 🔒 reemplaza con tu public anon key
+const sb = createClient(supabaseUrl, supabaseKey);
+
+// 🔸 Elementos del DOM
+const btnSignIn = document.getElementById("btnSignIn");
+const inputEmail = document.getElementById("emailInput");
+
+// 🔸 Evento para enviar el Magic Link
+btnSignIn.addEventListener("click", async () => {
+  const email = inputEmail.value.trim();
+  if (!email) {
+    alert("⚠️ Debes ingresar un correo electrónico.");
+    return;
+  }
+
+  // Enviamos el link de acceso mágico
+  const { error } = await sb.auth.signInWithOtp({
+    email: email,
+    options: {
+      emailRedirectTo: "https://luiskq1225-dotcom.github.io/survigames/index(menu).html"
+    },
+  });
+
+  if (error) {
+    alert("❌ Error al enviar el enlace: " + error.message);
+  } else {
+    alert("📩 Te enviamos un enlace mágico a tu correo. Revisa tu bandeja!");
+  }
+});
+
+// 🔸 Verificamos si ya hay una sesión activa
+sb.auth.getUser().then(({ data, error }) => {
+  if (data.user) {
+    console.log("Usuario autenticado:", data.user.email);
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("welcomeSection").style.display = "block";
+    document.getElementById("userEmail").textContent = data.user.email;
+  }
+});
+
+// 🔸 Cerrar sesión
+document.getElementById("btnSignOut").addEventListener("click", async () => {
+  await sb.auth.signOut();
+  alert("👋 Sesión cerrada correctamente");
+  window.location.reload();
+});
+</script>
+
 </body>
 </html>
-
-
-
-
-
 
 
 
