@@ -91,13 +91,13 @@
   <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const sb = createClient("https://TU_URL.supabase.co", "TU_PUBLIC_ANON_KEY");
+const sb = createClient("https://jrzpqsgjghopnnntxypp.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU");
 
 // Verificar si hay usuario logueado
 const { data, error } = await sb.auth.getUser();
 
 if (error || !data.user) {
-  window.location.href = "index(menu).html"; // Redirige si no hay sesión
+  window.location.href = "index.html"; // Redirige si no hay sesión
 }
 </script>
 
