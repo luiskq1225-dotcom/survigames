@@ -84,6 +84,15 @@
   <h2>Bienvenido</h2>
   <p id="userEmail"></p>
   <button id="btnSignOut">Cerrar sesión</button>
+
+  <section id="loginSection" style="text-align:center; margin:40px 0;">
+  <h2>Iniciar sesión</h2>
+  <input type="email" id="emailInput" placeholder="Ingresa tu correo" /><br>
+  <input type="text" id="nicknameInput" placeholder="Nombre de usuario" /><br>
+  <button id="btnSignIn">Enviar enlace mágico</button>
+</section>
+
+
 </section>
 
 
@@ -94,6 +103,7 @@
         <span class="pill">Survigames</span>
       </div>
       <nav class="nav">
+        <span id="navUser" style="color:#9aa4b2; font-size:14px;"></span>
         <a href="#info">Info</a>
         <a href="#captures">Capturas</a>
         <a href="#privacy">Privacidad</a>
@@ -300,33 +310,42 @@
     const btnSignOut = document.getElementById("btnSignOut");
     const userEmail = document.getElementById("userEmail");
 
-    // 🔸 Enviar enlace mágico
-    btnSignIn.addEventListener("click", async () => {
-      const email = inputEmail.value.trim();
-      if (!email) return alert("⚠️ Debes ingresar un correo.");
 
-      const { error } = await sb.auth.signInWithOtp({
-        email: email,
-        options: {
-          emailRedirectTo: "https://luiskq1225-dotcom.github.io/survigames/",
-        },
-      });
+  // 🔸 Enviar enlace mágico con nickname incluido
+  btnSignIn.addEventListener("click", async () => {
+    const email = inputEmail.value.trim();
+    const nickname = document.getElementById("nicknameInput").value.trim();
 
-      if (error) {
-        alert("❌ Error al enviar el enlace: " + error.message);
-      } else {
-        alert("📩 Te enviamos un enlace mágico. Revisa tu correo!");
-      }
+    if (!email) return alert("⚠️ Debes ingresar un correo.");
+    if (!nickname) return alert("⚠️ Ingresa un nombre de usuario.");
+
+    const { error } = await sb.auth.signInWithOtp({
+      email: email,
+      options: {
+        data: { nickname: nickname }, // ✅ guarda el nickname en user_metadata
+        emailRedirectTo: "https://luiskq1225-dotcom.github.io/survigames/",
+      },
     });
 
-    // 🔸 Verificar sesión
+    if (error) {
+      alert("❌ Error al enviar el enlace: " + error.message);
+    } else {
+      alert(`📩 Te enviamos un enlace mágico a ${email}. Revisa tu correo.`);
+    }
+  });
+
+
     sb.auth.getUser().then(({ data, error }) => {
       if (data?.user) {
+        const user = data.user;
+        const nickname = user.user_metadata?.nickname || user.email;
+        
         loginSection.style.display = "none";
         welcomeSection.style.display = "block";
-        userEmail.textContent = data.user.email;
+        userEmail.textContent = `Bienvenido, ${nickname}`;
       }
     });
+
 
     // 🔸 Cerrar sesión
     btnSignOut.addEventListener("click", async () => {
@@ -392,7 +411,6 @@
 
 </body>
 </html>
-
 
 
 
