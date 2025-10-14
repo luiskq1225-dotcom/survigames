@@ -458,15 +458,26 @@ function delUser() {
       }
     }
 
-    function loadRandom(){
-      if (!DB.length) return;
-      current = DB[Math.floor(Math.random()*DB.length)];
-      $('#qAuthor').textContent = current.author || 'anon';
-      $('#qText').textContent = current.q;
-      setOption($('#mediaA'), $('#captionA'), current.a, current.aImg);
-      setOption($('#mediaB'), $('#captionB'), current.b, current.bImg);
-      $('#result').classList.add('hidden');
-    }
+function loadRandom(){
+  // Cargar la última versión del "DB" desde localStorage (para incluir nuevas preguntas)
+  const stored = localStorage.getItem(DB_KEY);
+  if (stored) {
+    try { DB = JSON.parse(stored); } catch {}
+  }
+
+  if (!DB || !DB.length) return;
+
+  // Elegir pregunta al azar
+  const index = Math.floor(Math.random() * DB.length);
+  current = DB[index];
+
+  $('#qAuthor').textContent = current.author || 'anon';
+  $('#qText').textContent = current.q;
+  setOption($('#mediaA'), $('#captionA'), current.a, current.aImg);
+  setOption($('#mediaB'), $('#captionB'), current.b, current.bImg);
+  $('#result').classList.add('hidden');
+}
+
 
     function vote(which){
       const u = getUser();
@@ -535,8 +546,19 @@ B) ${current.b}`;
             <div class="pill">Votos: ${total}</div>
           </div>
         `;
-        el.querySelector('button').onclick = () => { current = item; $('#qAuthor').textContent = item.author || 'anon'; $('#qText').textContent = item.q; setOption($('#mediaA'), $('#captionA'), item.a, item.aImg); setOption($('#mediaB'), $('#captionB'), item.b, item.bImg); show('play'); };
-        list.appendChild(el);
+el.querySelector('button').onclick = () => {
+  current = item;
+  $('#qAuthor').textContent = item.author || 'anon';
+  $('#qText').textContent = item.q;
+  setOption($('#mediaA'), $('#captionA'), item.a, item.aImg);
+  setOption($('#mediaB'), $('#captionB'), item.b, item.bImg);
+  $('#result').classList.add('hidden');
+  show('play');
+
+  // 🔥 guardamos la pregunta seleccionada para jugarla al recargar
+  localStorage.setItem('lastPlayed', JSON.stringify(item));
+};
+
       });
     }
 
@@ -621,6 +643,22 @@ sb.auth.onAuthStateChange(async (_event, session) => {
     btnSignOut.classList.add('hidden');
   }
 })();
+// 🧩 Si el usuario viene de "Explorar" y había guardado una pregunta
+window.addEventListener('load', () => {
+  const last = localStorage.getItem('lastPlayed');
+  if (last) {
+    try {
+      const item = JSON.parse(last);
+      current = item;
+      $('#qAuthor').textContent = item.author || 'anon';
+      $('#qText').textContent = item.q;
+      setOption($('#mediaA'), $('#captionA'), item.a, item.aImg);
+      setOption($('#mediaB'), $('#captionB'), item.b, item.bImg);
+      $('#result').classList.add('hidden');
+    } catch {}
+    localStorage.removeItem('lastPlayed');
+  }
+});
 
 
  </script>
