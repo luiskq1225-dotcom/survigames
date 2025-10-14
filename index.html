@@ -90,6 +90,14 @@
   <input type="email" id="emailInput" placeholder="Ingresa tu correo" /><br>
   <input type="text" id="nicknameInput" placeholder="Nombre de usuario" /><br>
   <button id="btnSignIn">Enviar enlace mágico</button>
+
+  <section id="loginSection" style="text-align:center; margin:40px 0;">
+  <h2>Iniciar sesión</h2>
+  <input type="email" id="emailInput" placeholder="Ingresa tu correo" /><br>
+  <input type="text" id="nicknameInput" placeholder="Nombre de usuario" /><br>
+  <button id="btnSignIn">Enviar enlace mágico</button>
+</section>
+
 </section>
 
 
@@ -311,6 +319,7 @@
     const userEmail = document.getElementById("userEmail");
 
 
+
   // 🔸 Enviar enlace mágico con nickname incluido
   btnSignIn.addEventListener("click", async () => {
     const email = inputEmail.value.trim();
@@ -335,16 +344,20 @@
   });
 
 
-    sb.auth.getUser().then(({ data, error }) => {
-      if (data?.user) {
-        const user = data.user;
-        const nickname = user.user_metadata?.nickname || user.email;
-        
-        loginSection.style.display = "none";
-        welcomeSection.style.display = "block";
-        userEmail.textContent = `Bienvenido, ${nickname}`;
-      }
-    });
+
+  sb.auth.getUser().then(({ data, error }) => {
+    if (data?.user) {
+      const user = data.user;
+      const nickname = user.user_metadata?.nickname || user.email;
+      
+      loginSection.style.display = "none";
+      welcomeSection.style.display = "block";
+      userEmail.textContent = `Bienvenido, ${nickname}`;
+      const navUser = document.getElementById("navUser");
+    if (navUser) navUser.textContent = nickname;
+    }
+  });
+
 
 
     // 🔸 Cerrar sesión
