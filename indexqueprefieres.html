@@ -529,11 +529,40 @@ sb.auth.onAuthStateChange((_event, session) => {
     btnSignOut.classList.remove('hidden');
   }
 })();
+// Revisar si ya está logueado al cargar la página
+(async () => {
+  const { data } = await sb.auth.getSession();
+  const user = data?.session?.user;
+
+  if (user) {
+    // Mostrar email
+    authUser.textContent = user.email;
+    btnSignIn.classList.add('hidden');
+    btnSignOut.classList.remove('hidden');
+
+    // 🧩 Nuevo: obtener o guardar el nickname
+    let nickname = localStorage.getItem("nickname");
+
+    // Si no hay nickname guardado, pedí uno o usá el que el usuario haya escrito en login
+    if (!nickname) {
+      nickname = prompt("Ingresa tu nickname (solo la primera vez):");
+      if (nickname) {
+        localStorage.setItem("nickname", nickname.trim());
+      }
+    }
+
+  } else {
+    // No hay sesión activa
+    btnSignIn.classList.remove('hidden');
+    btnSignOut.classList.add('hidden');
+  }
+})();
 
 
  </script>
 </body>
 </html>
+
 
 
 
