@@ -246,6 +246,35 @@ if (error || !data.user) {
       }
     }
 
+    // ✅ Sincronizar nickname local con Supabase
+async function syncUserNickname() {
+  const { data } = await sb.auth.getSession();
+  const user = data?.session?.user;
+
+  if (!user) return;
+
+  let localUser = getUser();
+
+  if (!localUser) {
+    // Buscar si ya hay nickname
+    let nickname = localStorage.getItem("nickname");
+
+    // Si no hay nickname guardado, pedimos uno
+    if (!nickname) {
+      nickname = prompt("Ingresa tu nickname (solo la primera vez):");
+      if (nickname) {
+        localStorage.setItem("nickname", nickname.trim());
+      } else {
+        alert("Debes tener un nickname para continuar.");
+        return;
+      }
+    }
+
+    // Guardar también en tu sistema local
+    setUser(nickname.trim());
+  }
+}
+
   sb.auth.getSession().then(({ data }) => {
     CURRENT_USER = data?.session?.user || null;
     setAuthUI(CURRENT_USER);
@@ -504,18 +533,21 @@ btnSignIn.addEventListener('click', async () => {
 
 
 // --- ACTUALIZAR UI ---
-sb.auth.onAuthStateChange((_event, session) => {
+sb.auth.onAuthStateChange(async (_event, session) => {
   const user = session?.user;
   if (user) {
     authUser.textContent = user.email;
     btnSignIn.classList.add('hidden');
     btnSignOut.classList.remove('hidden');
+
+    await syncUserNickname(); // 🧩 sincroniza nickname local
   } else {
     authUser.textContent = 'Invitado';
     btnSignIn.classList.remove('hidden');
     btnSignOut.classList.add('hidden');
   }
 });
+
 
 // Revisar si ya está logueado al cargar la página
 (async () => {
@@ -560,7 +592,3 @@ sb.auth.onAuthStateChange((_event, session) => {
  </script>
 </body>
 </html>
-
-
-
-
