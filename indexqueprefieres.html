@@ -306,9 +306,36 @@ async function syncUserNickname() {
       return { id: crypto.randomUUID(), q, a, b, aImg: aImg||null, bImg: bImg||null, author, votesA: 0, votesB: 0, voters: {} };
     }
 
-    function getUser(){ const raw = localStorage.getItem(USER_KEY); return raw ? JSON.parse(raw) : null; }
-    function setUser(nick){ localStorage.setItem(USER_KEY, JSON.stringify({ id: 'local:'+nick.toLowerCase(), nick })); }
-    function delUser(){ localStorage.removeItem(USER_KEY); }
+ function setUser(nick) {
+  const nickTrim = nick.trim();
+  localStorage.setItem(USER_KEY, JSON.stringify({ id: 'local:' + nickTrim.toLowerCase(), nick: nickTrim }));
+  localStorage.setItem("nickname", nickTrim); // redundancia por si acaso
+}
+
+function getUser() {
+  // Prioridad 1: datos locales
+  const raw = localStorage.getItem(USER_KEY);
+  if (raw) {
+    try { return JSON.parse(raw); } catch {}
+  }
+
+  // Prioridad 2: nickname directo
+  const nick = localStorage.getItem("nickname");
+  if (nick) return { id: 'local:' + nick.toLowerCase(), nick };
+
+  // Prioridad 3: usuario Supabase (solo correo)
+  const session = window._lastSupabaseSession; // guardaremos aquí la sesión más reciente
+  const email = session?.user?.email;
+  if (email) return { id: 'supabase:' + email.toLowerCase(), nick: email };
+
+  return null;
+}
+
+function delUser() {
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem("nickname");
+}
+
 
     let DB = loadDB();
 
@@ -534,19 +561,31 @@ btnSignIn.addEventListener('click', async () => {
 
 // --- ACTUALIZAR UI ---
 sb.auth.onAuthStateChange(async (_event, session) => {
+  window._lastSupabaseSession = session; // 💾 guardamos la sesión globalmente
   const user = session?.user;
+
   if (user) {
     authUser.textContent = user.email;
     btnSignIn.classList.add('hidden');
     btnSignOut.classList.remove('hidden');
 
-    await syncUserNickname(); // 🧩 sincroniza nickname local
+    // 🔧 Sincronizar nickname
+    let nickname = localStorage.getItem("nickname");
+    if (!nickname) {
+      nickname = prompt("Ingresa tu nickname (solo la primera vez):");
+      if (nickname) {
+        setUser(nickname);
+      } else {
+        alert("Debes tener un nickname para continuar.");
+      }
+    }
   } else {
     authUser.textContent = 'Invitado';
     btnSignIn.classList.remove('hidden');
     btnSignOut.classList.add('hidden');
   }
 });
+
 
 
 // Revisar si ya está logueado al cargar la página
@@ -592,3 +631,4 @@ sb.auth.onAuthStateChange(async (_event, session) => {
  </script>
 </body>
 </html>
+
