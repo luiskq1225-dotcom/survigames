@@ -91,7 +91,6 @@
   <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const sb = createClient("https://jrzpqsgjghopnnntxypp.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU");
 
 // Verificar si hay usuario logueado
 const { data, error } = await sb.auth.getUser();
@@ -225,7 +224,7 @@ if (error || !data.user) {
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU";
 
     // Crear el cliente global de Supabase
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // ====== AUTENTICACIÓN (SUPABASE) ======
     const AUTH_REDIRECT = window.location.origin;
@@ -247,17 +246,16 @@ if (error || !data.user) {
       }
     }
 
-    // Obtener sesión actual al cargar
-    supabase.auth.getSession().then(({ data }) => {
-      CURRENT_USER = data?.session?.user || null;
-      setAuthUI(CURRENT_USER);
-    });
+  sb.auth.getSession().then(({ data }) => {
+    CURRENT_USER = data?.session?.user || null;
+    setAuthUI(CURRENT_USER);
+  });
 
-    // Escuchar cambios en sesión (login/logout)
-    supabase.auth.onAuthStateChange((_event, session) => {
-      CURRENT_USER = session?.user || null;
-      setAuthUI(CURRENT_USER);
-    });
+  sb.auth.onAuthStateChange((_event, session) => {
+    CURRENT_USER = session?.user || null;
+    setAuthUI(CURRENT_USER);
+  });
+
 
 
     function loadDB() {
