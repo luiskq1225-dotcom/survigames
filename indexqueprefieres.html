@@ -212,122 +212,44 @@ if (error || !data.user) {
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script>
-    /*********************************
-     * PEQUEÑA "BASE DE DATOS" LOCAL *
-     *********************************/
-    const DB_KEY = 'qp_db_v2_images';
-    const USER_KEY = 'qp_user_v1';
+<script>
+/*********************************
+ * PEQUEÑA "BASE DE DATOS" LOCAL *
+ *********************************/
+const DB_KEY = 'qp_db_v2_images';
+const USER_KEY = 'qp_user_v1';
 
-    // ====== CONFIGURACIÓN SUPABASE ======
-    const SUPABASE_URL = "https://jrzpqsgjghopnnntxypp.supabase.co"; // tu URL real
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU";
+// ====== CONFIGURACIÓN SUPABASE ======
+const SUPABASE_URL = "https://jrzpqsgjghopnnntxypp.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU";
 
-    // Crear el cliente global de Supabase
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    // ====== AUTENTICACIÓN (SUPABASE) ======
-    const AUTH_REDIRECT = window.location.origin;
-    let CURRENT_USER = null;
+// ✅ Cliente único de Supabase
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function setAuthUI(user) {
-      const elUser = document.getElementById("authUser");
-      const btnIn = document.getElementById("btnSignIn");
-      const btnOut = document.getElementById("btnSignOut");
+// Referencias UI
+const authUser = document.getElementById('authUser');
+const btnSignIn = document.getElementById('btnSignIn');
+const btnSignOut = document.getElementById('btnSignOut');
 
-      if (user) {
-        elUser.textContent = user.email || "Usuario";
-        btnIn.classList.add("hidden");
-        btnOut.classList.remove("hidden");
-      } else {
-        elUser.textContent = "Invitado";
-        btnIn.classList.remove("hidden");
-        btnOut.classList.add("hidden");
-      }
-    }
-
-    // ✅ Sincronizar nickname local con Supabase
-async function syncUserNickname() {
-  const { data } = await sb.auth.getSession();
-  const user = data?.session?.user;
-
-  if (!user) return;
-
-  let localUser = getUser();
-
-  if (!localUser) {
-    // Buscar si ya hay nickname
-    let nickname = localStorage.getItem("nickname");
-
-    // Si no hay nickname guardado, pedimos uno
-    if (!nickname) {
-      nickname = prompt("Ingresa tu nickname (solo la primera vez):");
-      if (nickname) {
-        localStorage.setItem("nickname", nickname.trim());
-      } else {
-        alert("Debes tener un nickname para continuar.");
-        return;
-      }
-    }
-
-    // Guardar también en tu sistema local
-    setUser(nickname.trim());
-  }
-}
-
-  sb.auth.getSession().then(({ data }) => {
-    CURRENT_USER = data?.session?.user || null;
-    setAuthUI(CURRENT_USER);
-  });
-
-  sb.auth.onAuthStateChange((_event, session) => {
-    CURRENT_USER = session?.user || null;
-    setAuthUI(CURRENT_USER);
-  });
-
-
-
-    function loadDB() {
-      const raw = localStorage.getItem(DB_KEY);
-      if (raw) try { return JSON.parse(raw); } catch {}
-      // semilla inicial
-      const seed = [
-        mkQ('¿Qué prefieres?', 'Dormir 5 min más', 'Despertar sin sueño', 'sistema', null, null),
-        mkQ('¿Qué prefieres?', 'Comer pizza por un año', 'Comer sushi por un año', 'sistema', null, null),
-        mkQ('¿Qué prefieres?', 'Tu novio salga con su ex a café', 'Que pierda una pierna 😬', 'anon', null, null),
-        mkQ('¿Qué prefieres?', 'Tal chica de anime', 'Tal otra chica de anime', 'anon', null, null)
-      ];
-      saveDB(seed);
-      return seed;
-    }
-    function saveDB(arr){ localStorage.setItem(DB_KEY, JSON.stringify(arr)); }
-
-    function mkQ(q, a, b, author, aImg, bImg) {
-      return { id: crypto.randomUUID(), q, a, b, aImg: aImg||null, bImg: bImg||null, author, votesA: 0, votesB: 0, voters: {} };
-    }
-
- function setUser(nick) {
+/********************
+ * FUNCIONES USUARIO
+ ********************/
+function setUser(nick) {
   const nickTrim = nick.trim();
   localStorage.setItem(USER_KEY, JSON.stringify({ id: 'local:' + nickTrim.toLowerCase(), nick: nickTrim }));
-  localStorage.setItem("nickname", nickTrim); // redundancia por si acaso
+  localStorage.setItem("nickname", nickTrim);
 }
 
 function getUser() {
-  // Prioridad 1: datos locales
   const raw = localStorage.getItem(USER_KEY);
   if (raw) {
     try { return JSON.parse(raw); } catch {}
   }
-
-  // Prioridad 2: nickname directo
   const nick = localStorage.getItem("nickname");
   if (nick) return { id: 'local:' + nick.toLowerCase(), nick };
-
-  // Prioridad 3: usuario Supabase (solo correo)
-  const session = window._lastSupabaseSession; // guardaremos aquí la sesión más reciente
+  const session = window._lastSupabaseSession;
   const email = session?.user?.email;
   if (email) return { id: 'supabase:' + email.toLowerCase(), nick: email };
-
   return null;
 }
 
@@ -336,249 +258,61 @@ function delUser() {
   localStorage.removeItem("nickname");
 }
 
+// ✅ Sincronizar nickname local al iniciar sesión
+async function syncUserNickname() {
+  const { data } = await sb.auth.getSession();
+  const user = data?.session?.user;
+  window._lastSupabaseSession = data?.session || null;
 
-    let DB = loadDB();
+  if (!user) return;
 
-    /********************
-     * UI & NAVEGACIÓN  *
-     ********************/
-    const $ = (sel) => document.querySelector(sel);
-    const views = {
-      play: $('#viewPlay'),
-      create: $('#viewCreate'),
-      feed: $('#viewFeed'),
-      login: $('#viewLogin'),
-    };
-
-    function show(which){
-      Object.values(views).forEach(v => v.classList.add('hidden'));
-      views[which].classList.remove('hidden');
-      if (which === 'play') loadRandom();
-      if (which === 'feed') renderFeed();
-      updateNav();
+  let localUser = getUser();
+  if (!localUser) {
+    let nickname = localStorage.getItem("nickname");
+    if (!nickname) {
+      nickname = prompt("Ingresa tu nickname (solo la primera vez):");
     }
+    if (nickname) setUser(nickname);
+  }
+}
 
-    $('#navPlay').onclick = () => show('play');
-    $('#navCreate').onclick = () => show('create');
-    $('#navFeed').onclick = () => show('feed');
- 
-    
-
-    // LOGIN
-    $('#setNick').onclick = () => {
-      const nick = $('#nick').value.trim();
-      if (!nick) return alert('Escribe un nickname');
-      setUser(nick); updateNav(); alert('✓ Usuario guardado');
-    };
-    $('#logout').onclick = () => { delUser(); updateNav(); alert('Sesión local eliminada'); };
-
-    // HELPERS
-    function readFileToDataUrl(file){
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
-    async function resolveImage(urlInput, fileInput){
-      const url = urlInput.value.trim();
-      if (url) return url; // usar URL directa
-      const file = fileInput.files?.[0];
-      if (file) {
-        // Nota: se guarda como base64 en localStorage (solo prototipo)
-        try { return await readFileToDataUrl(file); } catch { return null; }
-      }
-      return null;
-    }
-
-    // CREATE
-    const fileA = $('#fileA');
-    const fileB = $('#fileB');
-    const urlA  = $('#urlA');
-    const urlB  = $('#urlB');
-    const prevA = $('#prevA');
-    const prevB = $('#prevB');
-
-    fileA?.addEventListener('change', async () => { const f = fileA.files?.[0]; prevA.src = f ? await readFileToDataUrl(f) : ''; });
-    fileB?.addEventListener('change', async () => { const f = fileB.files?.[0]; prevB.src = f ? await readFileToDataUrl(f) : ''; });
-    urlA?.addEventListener('change', () => { prevA.src = urlA.value || ''; });
-    urlB?.addEventListener('change', () => { prevB.src = urlB.value || ''; });
-
-    $('#saveQ').onclick = async () => {
-      const u = getUser();
-      if (!u) return alert('Primero inicia sesión (nickname).');
-      const q = $('#inpQ').value.trim();
-      const a = $('#inpA').value.trim();
-      const b = $('#inpB').value.trim();
-      const aImg = await resolveImage(urlA, fileA);
-      const bImg = await resolveImage(urlB, fileB);
-      if (!q || !a || !b) return alert('Completa la pregunta y ambas opciones.');
-      DB.push(mkQ(q, a, b, u.nick, aImg, bImg));
-      saveDB(DB);
-      $('#inpQ').value = ''; $('#inpA').value = ''; $('#inpB').value = '';
-      urlA.value=''; urlB.value=''; if (prevA) prevA.src=''; if (prevB) prevB.src=''; if (fileA) fileA.value=''; if (fileB) fileB.value='';
-      alert('✓ Publicada con imagen. ¡Vamos a jugar!');
-      show('play');
-    };
-    $('#clearForm').onclick = () => { $('#inpQ').value=''; $('#inpA').value=''; $('#inpB').value=''; urlA.value=''; urlB.value=''; if (prevA) prevA.src=''; if (prevB) prevB.src=''; if (fileA) fileA.value=''; if (fileB) fileB.value=''; };
-
-    // PLAY
-    let current = null;
-    function setOption(elMedia, elCaption, text, img){
-      elCaption.textContent = text || '';
-      elMedia.innerHTML = '';
-      if (img) {
-        const im = new Image();
-        im.loading = 'lazy';
-        im.decoding = 'async';
-        im.alt = text || '';
-        im.src = img;
-        elMedia.appendChild(im);
-      } else {
-        elMedia.innerHTML = '<span class="muted">Sin imagen</span>';
-      }
-    }
-
-    function loadRandom(){
-      if (!DB.length) return;
-      current = DB[Math.floor(Math.random()*DB.length)];
-      $('#qAuthor').textContent = current.author || 'anon';
-      $('#qText').textContent = current.q;
-      setOption($('#mediaA'), $('#captionA'), current.a, current.aImg);
-      setOption($('#mediaB'), $('#captionB'), current.b, current.bImg);
-      $('#result').classList.add('hidden');
-    }
-
-    function vote(which){
-      const u = getUser();
-      if (!u) return alert('Primero inicia sesión (nickname).');
-      if (!current) return;
-      if (current.voters[u.id]) return showResult();
-      if (which === 'A') current.votesA++; else current.votesB++;
-      current.voters[u.id] = which;
-      saveDB(DB);
-      showResult();
-    }
-
-    function showResult(){
-      const total = (current.votesA + current.votesB) || 1;
-      const pctA = Math.round(current.votesA * 100 / total);
-      const pctB = 100 - pctA;
-      $('#pctA').textContent = pctA + '%';
-      $('#pctB').textContent = pctB + '%';
-      $('#fillA').style.width = pctA + '%';
-      $('#fillB').style.width = pctB + '%';
-      $('#result').classList.remove('hidden');
-    }
-
-    $('#optA').onclick = () => vote('A');
-    $('#optB').onclick = () => vote('B');
-    $('#next').onclick = () => loadRandom();
-
-    $('#share').onclick = async () => {
-      const text = `¿Qué prefieres? ${current.q}
-A) ${current.a}
-B) ${current.b}`;
-      try {
-        await navigator.clipboard.writeText(text);
-        alert('Copiado al portapapeles ✅');
-      } catch {
-        alert('No se pudo copiar.');
-      }
-    };
-
-    // FEED
-    function renderFeed(){
-      const list = $('#feedList');
-      list.innerHTML = '';
-      [...DB].reverse().forEach(item => {
-        const total = (item.votesA + item.votesB) || 0;
-        const pct = total ? Math.round(item.votesA*100/total) : 0;
-        const el = document.createElement('div');
-        el.className = 'card stack';
-        el.innerHTML = `
-          <div class="muted">Por <strong>${item.author || 'anon'}</strong></div>
-          <div class="question-text center">${item.q}</div>
-          <div class="row two">
-            <div class="thumb">${item.aImg ? `<img src="${item.aImg}" alt="A" loading="lazy" decoding="async"/>` : '<span class="muted" style="display:grid;place-items:center;height:100%">Sin imagen</span>'}</div>
-            <div class="thumb">${item.bImg ? `<img src="${item.bImg}" alt="B" loading="lazy" decoding="async"/>` : '<span class="muted" style="display:grid;place-items:center;height:100%">Sin imagen</span>'}</div>
-          </div>
-          <div class="row two">
-            <div class="pill">A: ${item.a}</div>
-            <div class="pill right">B: ${item.b}</div>
-          </div>
-          <div class="stats">
-            <div class="bar"><div class="fill a" style="width:${pct}%"></div></div>
-            <div class="bar"><div class="fill b" style="width:${100-pct}%"></div></div>
-          </div>
-          <div class="row two">
-            <button class="btn" data-id="${item.id}">Jugar esta</button>
-            <div class="pill">Votos: ${total}</div>
-          </div>
-        `;
-        el.querySelector('button').onclick = () => { current = item; $('#qAuthor').textContent = item.author || 'anon'; $('#qText').textContent = item.q; setOption($('#mediaA'), $('#captionA'), item.a, item.aImg); setOption($('#mediaB'), $('#captionB'), item.b, item.bImg); show('play'); };
-        list.appendChild(el);
-      });
-    }
-
-    // START
-    (function init(){
-      updateNav();
-      show('play');
-    })();
-
-    // === LOGIN SYSTEM ===
-
-// Referencias a los botones
-const btnSignIn = document.getElementById('btnSignIn');
-const btnSignOut = document.getElementById('btnSignOut');
-const authUser = document.getElementById('authUser');
-
-// --- FUNCIÓN DE LOGIN ---
+/********************
+ * LOGIN / LOGOUT
+ ********************/
 btnSignIn.addEventListener('click', async () => {
   const email = prompt("📧 Ingresa tu correo para iniciar sesión:");
-
   if (!email) return alert("Debes ingresar un correo.");
-
+  const nickname = prompt("🧠 Ingresa tu nickname (solo la primera vez):");
+  if (!nickname) return alert("Debes ingresar un nickname.");
+  setUser(nickname);
   const { error } = await sb.auth.signInWithOtp({
     email: email,
     options: {
-    emailRedirectTo: "https://luiskq1225-dotcom.github.io/survigames/"
-
-  // vuelve a tu sitio
+      emailRedirectTo: "https://luiskq1225-dotcom.github.io/survigames/"
     }
   });
-
-  if (error) {
-    alert("Error al enviar el enlace: " + error.message);
-  } else {
-    alert("📩 Te enviamos un enlace mágico a tu correo. Revisa tu bandeja!");
-  }
+  if (error) alert("Error al enviar el enlace: " + error.message);
+  else alert("📩 Te enviamos un enlace mágico a tu correo. Revisa tu bandeja!");
 });
 
+btnSignOut.addEventListener('click', async () => {
+  await sb.auth.signOut();
+  delUser();
+  authUser.textContent = "Invitado";
+  btnSignIn.classList.remove('hidden');
+  btnSignOut.classList.add('hidden');
+  alert("Sesión cerrada correctamente.");
+});
 
-// --- ACTUALIZAR UI ---
+// ✅ Detectar cambios de sesión
 sb.auth.onAuthStateChange(async (_event, session) => {
-  window._lastSupabaseSession = session; // 💾 guardamos la sesión globalmente
+  window._lastSupabaseSession = session;
   const user = session?.user;
-
   if (user) {
     authUser.textContent = user.email;
     btnSignIn.classList.add('hidden');
     btnSignOut.classList.remove('hidden');
-
-    // 🔧 Sincronizar nickname
-    let nickname = localStorage.getItem("nickname");
-    if (!nickname) {
-      nickname = prompt("Ingresa tu nickname (solo la primera vez):");
-      if (nickname) {
-        setUser(nickname);
-      } else {
-        alert("Debes tener un nickname para continuar.");
-      }
-    }
+    await syncUserNickname();
   } else {
     authUser.textContent = 'Invitado';
     btnSignIn.classList.remove('hidden');
@@ -586,49 +320,26 @@ sb.auth.onAuthStateChange(async (_event, session) => {
   }
 });
 
-
-
-// Revisar si ya está logueado al cargar la página
+// ✅ Revisar si ya estaba logueado al abrir la página
 (async () => {
   const { data } = await sb.auth.getSession();
   const user = data?.session?.user;
+  window._lastSupabaseSession = data?.session || null;
+
   if (user) {
     authUser.textContent = user.email;
     btnSignIn.classList.add('hidden');
     btnSignOut.classList.remove('hidden');
-  }
-})();
-// Revisar si ya está logueado al cargar la página
-(async () => {
-  const { data } = await sb.auth.getSession();
-  const user = data?.session?.user;
-
-  if (user) {
-    // Mostrar email
-    authUser.textContent = user.email;
-    btnSignIn.classList.add('hidden');
-    btnSignOut.classList.remove('hidden');
-
-    // 🧩 Nuevo: obtener o guardar el nickname
-    let nickname = localStorage.getItem("nickname");
-
-    // Si no hay nickname guardado, pedí uno o usá el que el usuario haya escrito en login
-    if (!nickname) {
-      nickname = prompt("Ingresa tu nickname (solo la primera vez):");
-      if (nickname) {
-        localStorage.setItem("nickname", nickname.trim());
-      }
-    }
-
+    await syncUserNickname();
   } else {
-    // No hay sesión activa
+    authUser.textContent = 'Invitado';
     btnSignIn.classList.remove('hidden');
     btnSignOut.classList.add('hidden');
   }
 })();
+</script>
 
-
- </script>
 </body>
 </html>
+
 
