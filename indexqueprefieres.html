@@ -518,49 +518,63 @@ B) ${current.b}`;
     };
 
     // FEED
-    function renderFeed(){
-      const list = $('#feedList');
-      list.innerHTML = '';
-      [...DB].reverse().forEach(item => {
-        const total = (item.votesA + item.votesB) || 0;
-        const pct = total ? Math.round(item.votesA*100/total) : 0;
-        const el = document.createElement('div');
-        el.className = 'card stack';
-        el.innerHTML = `
-          <div class="muted">Por <strong>${item.author || 'anon'}</strong></div>
-          <div class="question-text center">${item.q}</div>
-          <div class="row two">
-            <div class="thumb">${item.aImg ? `<img src="${item.aImg}" alt="A" loading="lazy" decoding="async"/>` : '<span class="muted" style="display:grid;place-items:center;height:100%">Sin imagen</span>'}</div>
-            <div class="thumb">${item.bImg ? `<img src="${item.bImg}" alt="B" loading="lazy" decoding="async"/>` : '<span class="muted" style="display:grid;place-items:center;height:100%">Sin imagen</span>'}</div>
-          </div>
-          <div class="row two">
-            <div class="pill">A: ${item.a}</div>
-            <div class="pill right">B: ${item.b}</div>
-          </div>
-          <div class="stats">
-            <div class="bar"><div class="fill a" style="width:${pct}%"></div></div>
-            <div class="bar"><div class="fill b" style="width:${100-pct}%"></div></div>
-          </div>
-          <div class="row two">
-            <button class="btn" data-id="${item.id}">Jugar esta</button>
-            <div class="pill">Votos: ${total}</div>
-          </div>
-        `;
-el.querySelector('button').onclick = () => {
-  current = item;
-  $('#qAuthor').textContent = item.author || 'anon';
-  $('#qText').textContent = item.q;
-  setOption($('#mediaA'), $('#captionA'), item.a, item.aImg);
-  setOption($('#mediaB'), $('#captionB'), item.b, item.bImg);
-  $('#result').classList.add('hidden');
-  show('play');
+function renderFeed(){
+  // 🔹 Recargar el contenido actual del localStorage
+  const raw = localStorage.getItem(DB_KEY);
+  let data = [];
+  if (raw) {
+    try { data = JSON.parse(raw); } catch { data = []; }
+  } else {
+    data = DB || [];
+  }
 
-  // 🔥 guardamos la pregunta seleccionada para jugarla al recargar
-  localStorage.setItem('lastPlayed', JSON.stringify(item));
-};
+  const list = document.getElementById('feedList');
+  list.innerHTML = '';
 
-      });
-    }
+  if (!data.length) {
+    list.innerHTML = '<p class="muted center">No hay preguntas aún. ¡Crea la primera!</p>';
+    return;
+  }
+
+  // 🔹 Mostrar todas las preguntas (las más nuevas primero)
+  [...data].reverse().forEach(item => {
+    const total = (item.votesA + item.votesB) || 0;
+    const pct = total ? Math.round(item.votesA * 100 / total) : 0;
+    const el = document.createElement('div');
+    el.className = 'card stack';
+    el.innerHTML = `
+      <div class="muted">Por <strong>${item.author || 'anon'}</strong></div>
+      <div class="question-text center">${item.q}</div>
+      <div class="row two">
+        <div class="thumb">${item.aImg ? `<img src="${item.aImg}" alt="A" loading="lazy"/>` : '<span class="muted" style="display:grid;place-items:center;height:100%">Sin imagen</span>'}</div>
+        <div class="thumb">${item.bImg ? `<img src="${item.bImg}" alt="B" loading="lazy"/>` : '<span class="muted" style="display:grid;place-items:center;height:100%">Sin imagen</span>'}</div>
+      </div>
+      <div class="row two">
+        <div class="pill">A: ${item.a}</div>
+        <div class="pill right">B: ${item.b}</div>
+      </div>
+      <div class="stats">
+        <div class="bar"><div class="fill a" style="width:${pct}%"></div></div>
+        <div class="bar"><div class="fill b" style="width:${100 - pct}%"></div></div>
+      </div>
+      <div class="row two">
+        <button class="btn" data-id="${item.id}">Jugar esta</button>
+        <div class="pill">Votos: ${total}</div>
+      </div>
+    `;
+    // 🔹 Conectar el botón de "Jugar esta"
+    el.querySelector('button').onclick = () => {
+      current = item;
+      document.getElementById('qAuthor').textContent = item.author || 'anon';
+      document.getElementById('qText').textContent = item.q;
+      setOption(document.getElementById('mediaA'), document.getElementById('captionA'), item.a, item.aImg);
+      setOption(document.getElementById('mediaB'), document.getElementById('captionB'), item.b, item.bImg);
+      document.getElementById('result').classList.add('hidden');
+      show('play');
+    };
+    list.appendChild(el);
+  });
+}
 
     // START
     (function init(){
@@ -664,6 +678,7 @@ window.addEventListener('load', () => {
  </script>
 </body>
 </html>
+
 
 
 
