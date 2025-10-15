@@ -435,7 +435,7 @@ function delUser() {
 
   if (!q || !a || !b) return alert('Completa la pregunta y ambas opciones.');
 
-  const { error } = await sb.from('preguntas').insert({
+  const { error } = await sb.from('Peguntas').insert({
     pregunta: q,
     opcion_a: a,
     opcion_b: b,
@@ -480,7 +480,7 @@ function delUser() {
     }
 
 async function loadRandom() {
-  const { data, error } = await sb.from('preguntas').select('*');
+  const { data, error } = await sb.from('Preguntas').select('*');
   if (error || !data.length) return;
 
   const random = data[Math.floor(Math.random() * data.length)];
@@ -502,7 +502,7 @@ async function vote(which) {
   const newValue = (current[field] || 0) + 1;
 
   const { error } = await sb
-    .from('preguntas')
+    .from('Preguntas')
     .update({ [field]: newValue })
     .eq('id', current.id);
 
@@ -547,7 +547,7 @@ B) ${current.b}`;
     // FEED
 async function renderFeed() {
   const { data, error } = await sb
-    .from('preguntas')
+    .from('Preguntas')
     .select('*')
     .order('created_at', { ascending: false });
 
