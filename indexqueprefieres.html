@@ -423,23 +423,44 @@ function delUser() {
     urlA?.addEventListener('change', () => { prevA.src = urlA.value || ''; });
     urlB?.addEventListener('change', () => { prevB.src = urlB.value || ''; });
 
-    $('#saveQ').onclick = async () => {
-      const u = getUser();
-      if (!u) return alert('Primero inicia sesión (nickname).');
-      const q = $('#inpQ').value.trim();
-      const a = $('#inpA').value.trim();
-      const b = $('#inpB').value.trim();
-      const aImg = await resolveImage(urlA, fileA);
-      const bImg = await resolveImage(urlB, fileB);
-      if (!q || !a || !b) return alert('Completa la pregunta y ambas opciones.');
-      DB.push(mkQ(q, a, b, u.nick, aImg, bImg));
-      saveDB(DB);
-      $('#inpQ').value = ''; $('#inpA').value = ''; $('#inpB').value = '';
-      urlA.value=''; urlB.value=''; if (prevA) prevA.src=''; if (prevB) prevB.src=''; if (fileA) fileA.value=''; if (fileB) fileB.value='';
-      alert('✓ Publicada con imagen. ¡Vamos a jugar!');
-      show('play');
-    };
-    $('#clearForm').onclick = () => { $('#inpQ').value=''; $('#inpA').value=''; $('#inpB').value=''; urlA.value=''; urlB.value=''; if (prevA) prevA.src=''; if (prevB) prevB.src=''; if (fileA) fileA.value=''; if (fileB) fileB.value=''; };
+ $('#saveQ').onclick = async () => {
+  const u = getUser();
+  if (!u) return alert('Primero inicia sesión (nickname).');
+
+  const q = $('#inpQ').value.trim();
+  const a = $('#inpA').value.trim();
+  const b = $('#inpB').value.trim();
+  const aImg = await resolveImage(urlA, fileA);
+  const bImg = await resolveImage(urlB, fileB);
+
+  if (!q || !a || !b) return alert('Completa la pregunta y ambas opciones.');
+
+  const { error } = await sb.from('preguntas').insert({
+    pregunta: q,
+    opcion_a: a,
+    opcion_b: b,
+    imagen_a: aImg,
+    imagen_b: bImg,
+    autor: u.nick || 'anon'
+  });
+
+  if (error) {
+    console.error(error);
+    alert('⚠️ Error al publicar la pregunta.');
+  } else {
+    alert('✅ Pregunta publicada en Supabase!');
+    $('#inpQ').value = '';
+    $('#inpA').value = '';
+    $('#inpB').value = '';
+    urlA.value = '';
+    urlB.value = '';
+    if (prevA) prevA.src = '';
+    if (prevB) prevB.src = '';
+    if (fileA) fileA.value = '';
+    if (fileB) fileB.value = '';
+    show('play');
+  }
+};
 
     // PLAY
     let current = null;
@@ -458,37 +479,43 @@ function delUser() {
       }
     }
 
-function loadRandom(){
-  // Cargar la última versión del "DB" desde localStorage (para incluir nuevas preguntas)
-  const stored = localStorage.getItem(DB_KEY);
-  if (stored) {
-    try { DB = JSON.parse(stored); } catch {}
-  }
+async function loadRandom() {
+  const { data, error } = await sb.from('preguntas').select('*');
+  if (error || !data.length) return;
 
-  if (!DB || !DB.length) return;
-
-  // Elegir pregunta al azar
-  const index = Math.floor(Math.random() * DB.length);
-  current = DB[index];
-
-  $('#qAuthor').textContent = current.author || 'anon';
-  $('#qText').textContent = current.q;
-  setOption($('#mediaA'), $('#captionA'), current.a, current.aImg);
-  setOption($('#mediaB'), $('#captionB'), current.b, current.bImg);
+  const random = data[Math.floor(Math.random() * data.length)];
+  current = random;
+  $('#qAuthor').textContent = random.autor || 'anon';
+  $('#qText').textContent = random.pregunta;
+  setOption($('#mediaA'), $('#captionA'), random.opcion_a, random.imagen_a);
+  setOption($('#mediaB'), $('#captionB'), random.opcion_b, random.imagen_b);
   $('#result').classList.add('hidden');
 }
 
 
-    function vote(which){
-      const u = getUser();
-      if (!u) return alert('Primero inicia sesión (nickname).');
-      if (!current) return;
-      if (current.voters[u.id]) return showResult();
-      if (which === 'A') current.votesA++; else current.votesB++;
-      current.voters[u.id] = which;
-      saveDB(DB);
-      showResult();
-    }
+async function vote(which) {
+  const u = getUser();
+  if (!u) return alert('Primero inicia sesión (nickname).');
+  if (!current) return;
+
+  const field = which === 'A' ? 'votos_a' : 'votos_b';
+  const newValue = (current[field] || 0) + 1;
+
+  const { error } = await sb
+    .from('preguntas')
+    .update({ [field]: newValue })
+    .eq('id', current.id);
+
+  if (error) {
+    console.error(error);
+    alert('⚠️ Error registrando el voto.');
+    return;
+  }
+
+  current[field] = newValue;
+  showResult();
+}
+
 
     function showResult(){
       const total = (current.votesA + current.votesB) || 1;
@@ -518,63 +545,66 @@ B) ${current.b}`;
     };
 
     // FEED
-function renderFeed(){
-  // 🔹 Recargar el contenido actual del localStorage
-  const raw = localStorage.getItem(DB_KEY);
-  let data = [];
-  if (raw) {
-    try { data = JSON.parse(raw); } catch { data = []; }
-  } else {
-    data = DB || [];
-  }
+async function renderFeed() {
+  const { data, error } = await sb
+    .from('preguntas')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-  const list = document.getElementById('feedList');
+  const list = $('#feedList');
   list.innerHTML = '';
 
-  if (!data.length) {
-    list.innerHTML = '<p class="muted center">No hay preguntas aún. ¡Crea la primera!</p>';
+  if (error) {
+    console.error(error);
+    list.innerHTML = '<p class="muted">⚠️ Error cargando preguntas.</p>';
     return;
   }
 
-  // 🔹 Mostrar todas las preguntas (las más nuevas primero)
-  [...data].reverse().forEach(item => {
-    const total = (item.votesA + item.votesB) || 0;
-    const pct = total ? Math.round(item.votesA * 100 / total) : 0;
+  if (!data || !data.length) {
+    list.innerHTML = '<p class="muted">No hay preguntas aún. ¡Crea la primera!</p>';
+    return;
+  }
+
+  data.forEach(item => {
+    const total = (item.votos_a + item.votos_b) || 0;
+    const pct = total ? Math.round(item.votos_a * 100 / total) : 0;
     const el = document.createElement('div');
     el.className = 'card stack';
     el.innerHTML = `
-      <div class="muted">Por <strong>${item.author || 'anon'}</strong></div>
-      <div class="question-text center">${item.q}</div>
+      <div class="muted">Por <strong>${item.autor || 'anon'}</strong></div>
+      <div class="question-text center">${item.pregunta}</div>
       <div class="row two">
-        <div class="thumb">${item.aImg ? `<img src="${item.aImg}" alt="A" loading="lazy"/>` : '<span class="muted" style="display:grid;place-items:center;height:100%">Sin imagen</span>'}</div>
-        <div class="thumb">${item.bImg ? `<img src="${item.bImg}" alt="B" loading="lazy"/>` : '<span class="muted" style="display:grid;place-items:center;height:100%">Sin imagen</span>'}</div>
+        <div class="thumb">${item.imagen_a ? `<img src="${item.imagen_a}" alt="A"/>` : '<span class="muted">Sin imagen</span>'}</div>
+        <div class="thumb">${item.imagen_b ? `<img src="${item.imagen_b}" alt="B"/>` : '<span class="muted">Sin imagen</span>'}</div>
       </div>
       <div class="row two">
-        <div class="pill">A: ${item.a}</div>
-        <div class="pill right">B: ${item.b}</div>
+        <div class="pill">A: ${item.opcion_a}</div>
+        <div class="pill right">B: ${item.opcion_b}</div>
       </div>
       <div class="stats">
         <div class="bar"><div class="fill a" style="width:${pct}%"></div></div>
         <div class="bar"><div class="fill b" style="width:${100 - pct}%"></div></div>
       </div>
       <div class="row two">
-        <button class="btn" data-id="${item.id}">Jugar esta</button>
+        <button class="btn">Jugar esta</button>
         <div class="pill">Votos: ${total}</div>
       </div>
     `;
-    // 🔹 Conectar el botón de "Jugar esta"
+
     el.querySelector('button').onclick = () => {
       current = item;
-      document.getElementById('qAuthor').textContent = item.author || 'anon';
-      document.getElementById('qText').textContent = item.q;
-      setOption(document.getElementById('mediaA'), document.getElementById('captionA'), item.a, item.aImg);
-      setOption(document.getElementById('mediaB'), document.getElementById('captionB'), item.b, item.bImg);
-      document.getElementById('result').classList.add('hidden');
+      $('#qAuthor').textContent = item.autor || 'anon';
+      $('#qText').textContent = item.pregunta;
+      setOption($('#mediaA'), $('#captionA'), item.opcion_a, item.imagen_a);
+      setOption($('#mediaB'), $('#captionB'), item.opcion_b, item.imagen_b);
+      $('#result').classList.add('hidden');
       show('play');
     };
+
     list.appendChild(el);
   });
 }
+
 
     // START
     (function init(){
@@ -678,7 +708,6 @@ window.addEventListener('load', () => {
  </script>
 </body>
 </html>
-
 
 
 
