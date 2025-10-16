@@ -482,7 +482,7 @@ function delUser() {
 async function loadRandom() {
   try {
     const { data, error } = await sb
-      .from('Preguntas')
+      .from('preguntas')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -519,7 +519,7 @@ async function vote(which) {
   const newValue = (current[field] || 0) + 1;
 
   const { error } = await sb
-    .from('Preguntas')
+    .from('preguntas')
     .update({ [field]: newValue })
     .eq('id', current.id);
 
@@ -568,7 +568,7 @@ async function renderFeed() {
     list.innerHTML = "<p class='muted'>Cargando preguntas...</p>";
 
     const { data, error } = await sb
-      .from('Preguntas')
+      .from('preguntas')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -727,7 +727,6 @@ window.addEventListener('load', () => {
  </script>
 </body>
 </html>
-
 
 
 
