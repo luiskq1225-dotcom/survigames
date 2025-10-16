@@ -435,7 +435,7 @@ function delUser() {
 
   if (!q || !a || !b) return alert('Completa la pregunta y ambas opciones.');
 
-  const { error } = await sb.from('Peguntas').insert({
+  const { error } = await sb.from('preguntas').insert({
     pregunta: q,
     opcion_a: a,
     opcion_b: b,
@@ -727,7 +727,6 @@ window.addEventListener('load', () => {
  </script>
 </body>
 </html>
-
 
 
 
