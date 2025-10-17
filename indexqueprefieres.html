@@ -182,6 +182,10 @@ if (error || !data.user) {
       </div>
     </section>
 
+    <div id="explorarContainer" class="explorar-lista">
+      <!-- Aquí se insertarán automáticamente las preguntas nuevas -->
+    </div>
+
     <!-- FEED -->
     <section id="viewFeed" class="card stack hidden">
       <h3 style="margin:0">Explorar preguntas</h3>
@@ -738,11 +742,8 @@ sb
 
 // 👇 Esta función agrega visualmente la nueva pregunta
 function agregarPreguntaAExplorar(pregunta) {
-  const contenedor = document.getElementById('explorarContainer'); // el div donde muestras las preguntas
+  const contenedor = document.getElementById('explorarContainer');
   if (!contenedor) return;
-  <div id="explorarContainer" class="explorar-lista">
-    <!-- Aquí se insertarán automáticamente las preguntas nuevas -->
-  </div>
 
   const item = document.createElement('div');
   item.classList.add('pregunta-card');
@@ -754,12 +755,14 @@ function agregarPreguntaAExplorar(pregunta) {
     </div>
     <p>Por: ${pregunta.autor || 'anon'}</p>
   `;
-  contenedor.prepend(item); // lo pone arriba de todo
+  contenedor.prepend(item);
 }
+
 
  </script>
 </body>
 </html>
+
 
 
 
