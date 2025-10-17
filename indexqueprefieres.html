@@ -723,6 +723,39 @@ window.addEventListener('load', () => {
   }
 });
 
+// 🔔 Escuchar cambios en tiempo real
+sb
+  .channel('realtime-preguntas')
+  .on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'preguntas' },
+    (payload) => {
+      console.log('Nueva pregunta publicada:', payload.new);
+      agregarPreguntaAExplorar(payload.new);
+    }
+  )
+  .subscribe();
+
+// 👇 Esta función agrega visualmente la nueva pregunta
+function agregarPreguntaAExplorar(pregunta) {
+  const contenedor = document.getElementById('explorarContainer'); // el div donde muestras las preguntas
+  if (!contenedor) return;
+  <div id="explorarContainer" class="explorar-lista">
+    <!-- Aquí se insertarán automáticamente las preguntas nuevas -->
+  </div>
+
+  const item = document.createElement('div');
+  item.classList.add('pregunta-card');
+  item.innerHTML = `
+    <h3>${pregunta.pregunta}</h3>
+    <div class="opciones">
+      <div><img src="${pregunta.imagen_a || ''}" alt="">${pregunta.opcion_a}</div>
+      <div><img src="${pregunta.imagen_b || ''}" alt="">${pregunta.opcion_b}</div>
+    </div>
+    <p>Por: ${pregunta.autor || 'anon'}</p>
+  `;
+  contenedor.prepend(item); // lo pone arriba de todo
+}
 
  </script>
 </body>
