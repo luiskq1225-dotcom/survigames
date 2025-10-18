@@ -538,16 +538,25 @@ async function vote(which) {
 }
 
 
-    function showResult(){
-      const total = (current.votesA + current.votesB) || 1;
-      const pctA = Math.round(current.votesA * 100 / total);
-      const pctB = 100 - pctA;
-      $('#pctA').textContent = pctA + '%';
-      $('#pctB').textContent = pctB + '%';
-      $('#fillA').style.width = pctA + '%';
-      $('#fillB').style.width = pctB + '%';
-      $('#result').classList.remove('hidden');
-    }
+function showResult() {
+  // Usamos los nombres reales de columnas de tu tabla
+  const votosA = Number(current.votos_a ?? 0);
+  const votosB = Number(current.votos_b ?? 0);
+  const total = votosA + votosB;
+
+  // Si aún no hay votos, mostramos 0%
+  const pctA = total > 0 ? Math.round((votosA / total) * 100) : 0;
+  const pctB = total > 0 ? Math.round((votosB / total) * 100) : 0;
+
+  // Actualizamos los textos y barras
+  $('#pctA').textContent = `${pctA}%`;
+  $('#pctB').textContent = `${pctB}%`;
+  $('#fillA').style.width = `${pctA}%`;
+  $('#fillB').style.width = `${pctB}%`;
+
+  $('#result').classList.remove('hidden');
+}
+
 
     $('#optA').onclick = () => vote('A');
     $('#optB').onclick = () => vote('B');
