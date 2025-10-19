@@ -1,4 +1,4 @@
-<!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -213,8 +213,22 @@ if (error || !data.user) {
     </div>
 
     <!-- FEED -->
-  <section id="viewFeed" class="card stack hidden">
-    <h3 style="margin:0">Explorar preguntas</h3>
+    <section id="viewFeed" class="card stack hidden">
+      <h3 style="margin:0">Explorar preguntas</h3>
+
+      <!-- 🔍 Buscador de tags -->
+      <div class="row two" style="align-items:center;">
+        <input id="searchTag" type="text" placeholder="Buscar por tag (Ej: anime, snk...)" />
+        <button id="btnSearchTag" class="primary">Buscar</button>
+      </div>
+
+      <!-- 🔥 Tags populares -->
+      <div id="popularTags" class="stack muted" style="margin-top:8px;">
+        <p><strong>Tags populares:</strong> <span id="tagsList">Cargando...</span></p>
+      </div>
+
+      <div id="feedList" class="stack"></div>
+    </section>
 
     <!-- 🔹 Contenedor de tags populares -->
     <div id="popularTags" class="row" style="flex-wrap:wrap; gap:8px; margin-bottom:8px;">
@@ -407,7 +421,10 @@ function delUser() {
       Object.values(views).forEach(v => v.classList.add('hidden'));
       views[which].classList.remove('hidden');
       if (which === 'play') loadRandom();
-      if (which === 'feed') renderFeed();
+      if (which === 'feed') {
+        renderFeed();
+        loadPopularTags();
+      }
       updateNav();
     }
 
@@ -682,6 +699,91 @@ async function renderFeed() {
   }
 }
 
+
+  /***********************
+ * 🔥 TAGS POPULARES
+ ***********************/
+async function loadPopularTags() {
+  try {
+    const { data, error } = await sb.rpc('get_popular_tags');
+    const tagsList = document.getElementById('tagsList');
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      tagsList.textContent = "No hay tags aún 😢";
+      return;
+    }
+
+    // Mostrar tags como botones clickeables
+    tagsList.innerHTML = data
+      .map(t => `<button class="btn tag-btn" data-tag="${t.tag}">${t.tag} (${t.count})</button>`)
+      .join(' ');
+
+    // Asignar acción a cada botón
+    document.querySelectorAll('.tag-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        searchByTag(btn.dataset.tag);
+      });
+    });
+  } catch (err) {
+    console.error("Error cargando tags:", err);
+    document.getElementById('tagsList').textContent = "⚠️ Error cargando tags.";
+  }
+}
+
+/***********************
+ * 🔎 BUSCAR POR TAG
+ ***********************/
+async function searchByTag(tagName) {
+  try {
+    const list = document.getElementById('feedList');
+    list.innerHTML = `<p class="muted">Buscando preguntas con el tag <strong>${tagName}</strong>...</p>`;
+
+    const { data, error } = await sb
+      .from('preguntas')
+      .select('*')
+      .contains('tags', [tagName]); // busca coincidencias en el array
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      list.innerHTML = `<p class="muted">No se encontraron preguntas con el tag <strong>${tagName}</strong>.</p>`;
+      return;
+    }
+
+    // Mostrar resultados reutilizando el render
+    list.innerHTML = "";
+    data.forEach(item => {
+      const total = (item.votos_a + item.votos_b) || 0;
+      const pct = total ? Math.round(item.votos_a * 100 / total) : 0;
+
+      const el = document.createElement('div');
+      el.className = 'card stack';
+      el.innerHTML = `
+        <div class="muted">Por <strong>${item.autor || 'Anónimo'}</strong></div>
+        <div class="question-text center">${item.pregunta}</div>
+        <div class="row two">
+          <div class="thumb">${item.imagen_a ? `<img src="${item.imagen_a}" alt="A"/>` : '<span class="muted">Sin imagen</span>'}</div>
+          <div class="thumb">${item.imagen_b ? `<img src="${item.imagen_b}" alt="B"/>` : '<span class="muted">Sin imagen</span>'}</div>
+        </div>
+        <div class="row two">
+          <div class="pill">A: ${item.opcion_a}</div>
+          <div class="pill right">B: ${item.opcion_b}</div>
+        </div>
+      `;
+      list.appendChild(el);
+    });
+  } catch (err) {
+    console.error("Error en búsqueda:", err);
+  }
+}
+
+// Asignar acción al botón Buscar
+document.getElementById('btnSearchTag').addEventListener('click', () => {
+  const tag = document.getElementById('searchTag').value.trim();
+  if (tag) searchByTag(tag);
+});
+
 // 🌟 Cargar y mostrar los tags más populares
 async function loadPopularTags() {
   const cont = document.getElementById('popularTags');
@@ -895,7 +997,6 @@ function agregarPreguntaAExplorar(pregunta) {
  </script>
 </body>
 </html>
-
 
 
 
