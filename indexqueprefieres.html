@@ -152,8 +152,19 @@ if (error || !data.user) {
 
     <!-- CREATE -->
     <section id="viewCreate" class="card stack hidden">
-      <h3 class="center" style="margin:0">Crear un “¿Qué prefieres?”</h3>
-      <p class="muted center">El texto queda centrado; puedes añadir imágenes a cada opción (URL o archivo).</p>
+<h3 class="center" style="margin:0">Crear un “¿Qué prefieres?”</h3>
+<div class="card" style="background:#0e1428; border:1px solid #23284a; margin-top:8px; margin-bottom:12px; padding:12px;">
+  <h4 style="margin:0; color:#7c5cff;">🧠 Consejos para subir imágenes</h4>
+  <ul style="margin:8px 0 0 18px; color:#9aa4b2; font-size:14px; line-height:1.5;">
+    <li>Puedes <b>pegar un enlace directo</b> de imagen (ej: <i>https://i.pinimg.com/....jpg</i>).</li>
+    <li>O si preferís, <b>subí una imagen desde tu dispositivo</b> (botón “Choose File”).</li>
+    <li>Si ponés ambos, se usará <b>la URL primero</b> (el archivo queda de respaldo).</li>
+    <li>Usá imágenes <b>horizontales (16:9)</b> para que se vean bien en la vista de juego.</li>
+    <li>Los formatos recomendados son <b>JPG</b> o <b>PNG</b>, tamaño menor a <b>1 MB</b>.</li>
+  </ul>
+</div>
+<p class="muted center">El texto queda centrado; puedes añadir imágenes a cada opción (URL o archivo).</p>
+
       <div class="stack">
         <div>
           <label for="inpQ">Pregunta</label>
@@ -771,6 +782,7 @@ function agregarPreguntaAExplorar(pregunta) {
  </script>
 </body>
 </html>
+
 
 
 
