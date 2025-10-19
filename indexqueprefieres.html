@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -163,6 +163,15 @@ if (error || !data.user) {
     <li>Los formatos recomendados son <b>JPG</b> o <b>PNG</b>, tamaño menor a <b>1 MB</b>.</li>
   </ul>
 </div>
+
+  <div>
+    <label for="inpTags">Etiquetas / Tags</label>
+    <input id="inpTags" type="text" placeholder="Ej: anime, snk, pareja, acción" />
+    <p class="muted" style="font-size:13px;margin-top:4px;">
+      Separa las etiquetas con comas (,). Ejemplo: <b>anime, snk, acción</b>
+    </p>
+  </div>
+  
 <p class="muted center">El texto queda centrado; puedes añadir imágenes a cada opción (URL o archivo).</p>
 
       <div class="stack">
@@ -192,16 +201,28 @@ if (error || !data.user) {
         </div>
       </div>
     </section>
+    <div>
+
+  <label for="inpTags">Etiquetas (separadas por comas)</label>
+  <input id="inpTags" type="text" placeholder="Ej: anime, snk, romance" />
+  <p class="muted">Usa comas para separar las categorías o temas.</p>
+</div>
 
     <div id="explorarContainer" class="explorar-lista">
       <!-- Aquí se insertarán automáticamente las preguntas nuevas -->
     </div>
 
     <!-- FEED -->
-    <section id="viewFeed" class="card stack hidden">
-      <h3 style="margin:0">Explorar preguntas</h3>
-      <div id="feedList" class="stack"></div>
-    </section>
+  <section id="viewFeed" class="card stack hidden">
+    <h3 style="margin:0">Explorar preguntas</h3>
+
+    <!-- 🔹 Contenedor de tags populares -->
+    <div id="popularTags" class="row" style="flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+      <p class="muted" id="tagsLoading">Cargando etiquetas populares...</p>
+    </div>
+
+    <div id="feedList" class="stack"></div>
+  </section>
 
     <!-- LOGIN -->
     <section id="viewLogin" class="card stack hidden">
@@ -450,14 +471,25 @@ function delUser() {
 
   if (!q || !a || !b) return alert('Completa la pregunta y ambas opciones.');
 
+  const tags = $('#inpTags').value
+    .split(',')
+    .map(t => t.trim().toLowerCase())
+    .filter(t => t.length > 0);
+
+  const tagsText = $('#inpTags').value.trim();
+  const tagsArray = tagsText ? tagsText.split(',').map(t => t.trim()).filter(t => t) : [];
+
   const { error } = await sb.from('preguntas').insert({
     pregunta: q,
     opcion_a: a,
     opcion_b: b,
     imagen_a: aImg,
     imagen_b: bImg,
-    autor: u.nick || 'anon'
+    autor: u.nick || 'anon',
+    tags: tagsArray  // ✅ nuevo campo
   });
+
+
 
   if (error) {
     console.error(error);
@@ -465,6 +497,7 @@ function delUser() {
   } else {
     alert('✅ Pregunta publicada en Supabase!');
     $('#inpQ').value = '';
+    $('#inpTags').value = '';
     $('#inpA').value = '';
     $('#inpB').value = '';
     urlA.value = '';
@@ -603,6 +636,8 @@ async function renderFeed() {
       return;
     }
 
+
+
     list.innerHTML = "";
     data.forEach(item => {
       const total = (item.votos_a + item.votos_b) || 0;
@@ -647,6 +682,84 @@ async function renderFeed() {
   }
 }
 
+// 🌟 Cargar y mostrar los tags más populares
+async function loadPopularTags() {
+  const cont = document.getElementById('popularTags');
+  const loading = document.getElementById('tagsLoading');
+
+  try {
+    // Consulta SQL directa para contar las etiquetas más usadas
+    const { data, error } = await sb.rpc('get_popular_tags');
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      loading.textContent = "No hay etiquetas todavía 😢";
+      return;
+    }
+
+    loading.remove();
+    cont.innerHTML = '';
+
+    data.forEach(tag => {
+      const el = document.createElement('span');
+      el.className = 'pill';
+      el.style.cursor = 'pointer';
+      el.textContent = `#${tag.tag} (${tag.count})`;
+      el.onclick = () => filterByTag(tag.tag);
+      cont.appendChild(el);
+    });
+  } catch (err) {
+    console.error("Error cargando tags populares:", err);
+    loading.textContent = "⚠️ No se pudieron cargar las etiquetas.";
+  }
+}
+
+async function filterByTag(tag) {
+  try {
+    const list = $('#feedList');
+    list.innerHTML = `<p class='muted'>Buscando preguntas con el tag <b>#${tag}</b>...</p>`;
+
+    const { data, error } = await sb
+      .from('preguntas')
+      .select('*')
+      .contains('tags', [tag]); // filtra preguntas que contengan el tag
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      list.innerHTML = `<p class='muted'>No hay preguntas con el tag <b>#${tag}</b> 😢</p>`;
+      return;
+    }
+
+    list.innerHTML = '';
+    data.forEach(item => {
+      const total = (item.votos_a + item.votos_b) || 0;
+      const pct = total ? Math.round(item.votos_a * 100 / total) : 0;
+
+      const el = document.createElement('div');
+      el.className = 'card stack';
+      el.innerHTML = `
+        <div class="muted">Por <strong>${item.autor || 'Anónimo'}</strong></div>
+        <div class="question-text center">${item.pregunta}</div>
+        <div class="row two">
+          <div class="thumb">${item.imagen_a ? `<img src="${item.imagen_a}" alt="A"/>` : '<span class="muted">Sin imagen</span>'}</div>
+          <div class="thumb">${item.imagen_b ? `<img src="${item.imagen_b}" alt="B"/>` : '<span class="muted">Sin imagen</span>'}</div>
+        </div>
+        <div class="row two">
+          <div class="pill">A: ${item.opcion_a}</div>
+          <div class="pill right">B: ${item.opcion_b}</div>
+        </div>
+        <div class="stats">
+          <div class="bar"><div class="fill a" style="width:${pct}%"></div></div>
+          <div class="bar"><div class="fill b" style="width:${100 - pct}%"></div></div>
+        </div>
+      `;
+      list.appendChild(el);
+    });
+  } catch (err) {
+    console.error("Error filtrando por tag:", err);
+  }
+}
 
 
     // START
@@ -782,8 +895,6 @@ function agregarPreguntaAExplorar(pregunta) {
  </script>
 </body>
 </html>
-
-
 
 
 
