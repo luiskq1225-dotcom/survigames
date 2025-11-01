@@ -247,6 +247,11 @@ if (error || !data.user) {
           <label for="nick">Nickname</label>
           <input id="nick" type="text" placeholder="Ej: PanitaXD" />
         </div>
+
+        <label for="profilePic">Foto de perfil</label>
+          <input type="file" id="profilePic" accept="image/*" />
+          <img id="profilePreview" width="64" height="64" style="border-radius:50%;margin-top:8px;">
+
         <div class="stack">
           <label>&nbsp;</label>
           <button id="setNick" class="primary">Guardar</button>
@@ -442,6 +447,26 @@ function delUser() {
     };
     $('#logout').onclick = () => { delUser(); updateNav(); alert('Sesión local eliminada'); };
 
+        // === FOTO DE PERFIL LOCAL ===
+    document.getElementById("profilePic").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        localStorage.setItem("user_photo", dataUrl);
+        document.getElementById("profilePreview").src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Al cargar la vista de login, mostrar la imagen si ya hay una guardada
+    window.addEventListener("load", () => {
+      const savedPhoto = localStorage.getItem("user_photo");
+      if (savedPhoto) document.getElementById("profilePreview").src = savedPhoto;
+    });
+
     // HELPERS
     function readFileToDataUrl(file){
       return new Promise((resolve, reject) => {
@@ -496,15 +521,18 @@ function delUser() {
   const tagsText = $('#inpTags').value.trim();
   const tagsArray = tagsText ? tagsText.split(',').map(t => t.trim()).filter(t => t) : [];
 
-  const { error } = await sb.from('preguntas').insert({
-    pregunta: q,
-    opcion_a: a,
-    opcion_b: b,
-    imagen_a: aImg,
-    imagen_b: bImg,
-    autor: u.nick || 'anon',
-    tags: tagsArray  // ✅ nuevo campo
-  });
+const fotoPerfil = localStorage.getItem("user_photo") || "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // predeterminada
+
+const { error } = await sb.from('preguntas').insert({
+  pregunta: q,
+  opcion_a: a,
+  opcion_b: b,
+  imagen_a: aImg,
+  imagen_b: bImg,
+  autor: u.nick || 'anon',
+  foto_autor: fotoPerfil
+});
+
 
 
 
@@ -562,8 +590,15 @@ async function loadRandom() {
     // Elegir una pregunta aleatoria
     const item = data[Math.floor(Math.random() * data.length)];
     current = item;
+    const authorBox = document.getElementById('qAuthor');
+    authorBox.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
+        <img src="${item.foto_autor || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" 
+            style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+        <span>${item.autor || 'Anónimo'}</span>
+      </div>
+    `;
 
-    $('#qAuthor').textContent = item.autor || 'Anónimo';
     $('#qText').textContent = item.pregunta;
     setOption($('#mediaA'), $('#captionA'), item.opcion_a, item.imagen_a);
     setOption($('#mediaB'), $('#captionB'), item.opcion_b, item.imagen_b);
@@ -877,6 +912,8 @@ const btnSignIn = document.getElementById('btnSignIn');
 const btnSignOut = document.getElementById('btnSignOut');
 const authUser = document.getElementById('authUser');
 
+
+
 // --- FUNCIÓN DE LOGIN ---
 btnSignIn.addEventListener('click', async () => {
   const email = prompt("📧 Ingresa tu correo para iniciar sesión:");
@@ -997,6 +1034,7 @@ function agregarPreguntaAExplorar(pregunta) {
  </script>
 </body>
 </html>
+
 
 
 
