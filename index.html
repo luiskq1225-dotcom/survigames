@@ -105,11 +105,34 @@
         <a href="#captures">Capturas</a>
         <a href="#privacy">Privacidad</a>
         <a href="#contact">Contacto</a>
+        <a href="#" id="btnAccount">Cuenta</a>
         <a class="btn" href="PAginaeleccion.html">Jugar</a>
         <span id="navUser" style="color:#9aa4b2; font-size:14px; margin-left:12px;"></span>
       </nav>
     </div>
   </div>
+
+
+<!-- PERFIL / MI CUENTA -->
+  <section id="viewAccount" style="display:none; text-align:center; margin:40px 0;">
+    <h2>Mi cuenta</h2>
+
+    <div style="margin-bottom:16px;">
+      <img id="accPhoto"
+          src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
+          style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid #3fa7ff;box-shadow:0 0 12px rgba(63,167,255,.4);" />
+      <br>
+      <input type="file" id="accFile" accept="image/*" style="margin-top:8px;" />
+    </div>
+
+    <input type="text" id="accUser" placeholder="Tu nombre de usuario" style="padding:8px 10px;border-radius:8px;border:1px solid #303a5a;background:#0f172a;color:#cfd6ff;" />
+    <br><br>
+
+    <button id="accSave" class="btn">Guardar cambios</button>
+    <button id="accLogout" class="btn alt">Cerrar sesión</button>
+
+    <p id="accStatus" style="color:#9aa4b2;font-size:14px;margin-top:10px;"></p>
+  </section>
 
 <!-- HERO -->
 <header class="hero">
@@ -330,6 +353,104 @@ btnSignIn.addEventListener("click", async () => {
   }
 });
 
+// === PERFIL / CUENTA ===
+const accPhoto = document.getElementById("accPhoto");
+const accFile = document.getElementById("accFile");
+const accUser = document.getElementById("accUser");
+const accSave = document.getElementById("accSave");
+const accLogout = document.getElementById("accLogout");
+const accStatus = document.getElementById("accStatus");
+const btnAccount = document.getElementById("btnAccount");
+
+// Mostrar la vista de cuenta
+btnAccount?.addEventListener("click", async () => {
+  document.getElementById("loginSection").style.display = "none";
+  document.getElementById("welcomeSection").style.display = "none";
+  document.getElementById("viewAccount").style.display = "block";
+  await loadAccount();
+});
+
+// Cargar datos de la cuenta
+async function loadAccount() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) {
+    alert("Primero inicia sesión.");
+    return;
+  }
+
+  const { data, error } = await sb
+    .from("perfiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (data) {
+    accUser.value = data.username || "";
+    accPhoto.src = data.foto || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+  } else {
+    // Crear perfil si no existe
+    await sb.from("perfiles").insert({
+      id: user.id,
+      username: user.email.split("@")[0],
+      foto: "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+    });
+    accUser.value = user.email.split("@")[0];
+  }
+}
+
+// Subir foto localmente (preview)
+accFile?.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => accPhoto.src = reader.result;
+  reader.readAsDataURL(file);
+});
+
+// Guardar cambios
+accSave?.addEventListener("click", async () => {
+  const username = accUser.value.trim();
+  if (!username) return alert("Escribe un nombre de usuario.");
+
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return alert("Debes iniciar sesión.");
+
+  // Verificar si ya existe el username
+  const { data: exists } = await sb
+    .from("perfiles")
+    .select("id")
+    .eq("username", username)
+    .neq("id", user.id)
+    .maybeSingle();
+
+  if (exists) {
+    accStatus.textContent = "⚠️ Ese nombre ya está en uso.";
+    accStatus.style.color = "#ff5a76";
+    return;
+  }
+
+  const { error } = await sb
+    .from("perfiles")
+    .update({ username, foto: accPhoto.src })
+    .eq("id", user.id);
+
+  if (error) {
+    accStatus.textContent = "❌ Error al guardar.";
+    accStatus.style.color = "#ff5a76";
+  } else {
+    accStatus.textContent = "✅ Cambios guardados.";
+    accStatus.style.color = "#35d399";
+  }
+});
+
+// Cerrar sesión desde la vista de cuenta
+accLogout?.addEventListener("click", async () => {
+  await sb.auth.signOut();
+  alert("👋 Sesión cerrada correctamente.");
+  window.location.reload();
+});
+
+
 // 🔸 Verificar sesión y mostrar nickname
 sb.auth.getUser().then(({ data, error }) => {
   if (data?.user) {
@@ -411,5 +532,7 @@ sb.auth.getUser().then(({ data, error }) => {
 
 </body>
 </html>
+
+
 
 
