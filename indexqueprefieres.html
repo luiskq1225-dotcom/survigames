@@ -501,37 +501,64 @@ function delUser() {
     urlA?.addEventListener('change', () => { prevA.src = urlA.value || ''; });
     urlB?.addEventListener('change', () => { prevB.src = urlB.value || ''; });
 
- $('#saveQ').onclick = async () => {
+// ✅ Guardar pregunta con autor y foto del perfil
+$('#saveQ').onclick = async () => {
   const u = getUser();
-  if (!u) return alert('Primero inicia sesión (nickname).');
+  if (!u) return alert('Primero inicia sesión (nickname o cuenta).');
 
   const q = $('#inpQ').value.trim();
   const a = $('#inpA').value.trim();
   const b = $('#inpB').value.trim();
   const aImg = await resolveImage(urlA, fileA);
   const bImg = await resolveImage(urlB, fileB);
+  const tags = $('#tagsInput')?.value?.trim() || null;
 
   if (!q || !a || !b) return alert('Completa la pregunta y ambas opciones.');
 
-  const tags = $('#inpTags').value
-    .split(',')
-    .map(t => t.trim().toLowerCase())
-    .filter(t => t.length > 0);
+  // Obtener usuario de Supabase
+  const { data: { user } } = await sb.auth.getUser();
 
-  const tagsText = $('#inpTags').value.trim();
-  const tagsArray = tagsText ? tagsText.split(',').map(t => t.trim()).filter(t => t) : [];
+  // Buscar datos del perfil (nombre + foto)
+  let perfil = null;
+  if (user) {
+    const { data: p } = await sb
+      .from("perfiles")
+      .select("username, foto")
+      .eq("id", user.id)
+      .single();
+    perfil = p;
+  }
 
-const fotoPerfil = localStorage.getItem("user_photo") || "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // predeterminada
+  const { error } = await sb.from("preguntas").insert({
+    pregunta: q,
+    opcion_a: a,
+    opcion_b: b,
+    imagen_a: aImg,
+    imagen_b: bImg,
+    autor: perfil?.username || u.nick || "anon",
+    foto_autor: perfil?.foto || null,
+    tags: tags
+  });
 
-const { error } = await sb.from('preguntas').insert({
-  pregunta: q,
-  opcion_a: a,
-  opcion_b: b,
-  imagen_a: aImg,
-  imagen_b: bImg,
-  autor: u.nick || 'anon',
-  foto_autor: fotoPerfil
-});
+  if (error) {
+    console.error(error);
+    alert('⚠️ Error al publicar la pregunta.');
+  } else {
+    alert('✅ Pregunta publicada correctamente.');
+    $('#inpQ').value = '';
+    $('#inpA').value = '';
+    $('#inpB').value = '';
+    urlA.value = '';
+    urlB.value = '';
+    if (prevA) prevA.src = '';
+    if (prevB) prevB.src = '';
+    if (fileA) fileA.value = '';
+    if (fileB) fileB.value = '';
+    if ($('#tagsInput')) $('#tagsInput').value = '';
+    show('play');
+  }
+};
+
 
 
 
@@ -552,8 +579,7 @@ const { error } = await sb.from('preguntas').insert({
     if (fileA) fileA.value = '';
     if (fileB) fileB.value = '';
     show('play');
-  }
-};
+  };
 
     // PLAY
     let current = null;
@@ -671,15 +697,17 @@ B) ${current.b}`;
     };
 
     // FEED
+// ✅ Mostrar preguntas con foto y autor en el feed
+// ✅ Mostrar preguntas con foto y autor en el feed
 async function renderFeed() {
   try {
-    const list = $('#feedList');
+    const list = document.getElementById("feedList");
     list.innerHTML = "<p class='muted'>Cargando preguntas...</p>";
 
     const { data, error } = await sb
-      .from('preguntas')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("preguntas")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
 
@@ -688,49 +716,72 @@ async function renderFeed() {
       return;
     }
 
-
-
     list.innerHTML = "";
+
     data.forEach(item => {
       const total = (item.votos_a + item.votos_b) || 0;
       const pct = total ? Math.round(item.votos_a * 100 / total) : 0;
 
-      const el = document.createElement('div');
-      el.className = 'card stack';
+      const el = document.createElement("div");
+      el.className = "card stack";
+      el.style.padding = "18px";
+
       el.innerHTML = `
-        <div class="muted">Por <strong>${item.autor || 'Anónimo'}</strong></div>
+        <!-- 🧑 Autor con foto -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <img src="${item.foto_autor || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+               alt="foto de autor"
+               style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid #303a5a;">
+          <span class="muted" style="font-size:14px;">Por <strong>${item.autor || 'Anónimo'}</strong></span>
+        </div>
+
+        <!-- ❓ Pregunta -->
         <div class="question-text center">${item.pregunta}</div>
-        <div class="row two">
+
+        <!-- 🖼️ Opciones -->
+        <div class="row two" style="margin-top:8px;">
           <div class="thumb">${item.imagen_a ? `<img src="${item.imagen_a}" alt="A"/>` : '<span class="muted">Sin imagen</span>'}</div>
           <div class="thumb">${item.imagen_b ? `<img src="${item.imagen_b}" alt="B"/>` : '<span class="muted">Sin imagen</span>'}</div>
         </div>
+
+        <!-- 🅰️ y 🅱️ textos -->
         <div class="row two">
           <div class="pill">A: ${item.opcion_a}</div>
           <div class="pill right">B: ${item.opcion_b}</div>
         </div>
+
+        <!-- 📊 Votos -->
         <div class="stats">
           <div class="bar"><div class="fill a" style="width:${pct}%"></div></div>
           <div class="bar"><div class="fill b" style="width:${100 - pct}%"></div></div>
         </div>
-        <div class="row two">
+
+        <!-- 🎮 Botón de jugar -->
+        <div class="row two" style="margin-top:10px;">
           <button class="btn" data-id="${item.id}">Jugar esta</button>
           <div class="pill">Votos: ${total}</div>
         </div>
       `;
 
-      el.querySelector('button').onclick = () => {
+      el.querySelector("button").onclick = () => {
         current = item;
-        $('#qAuthor').textContent = item.autor || 'Anónimo';
-        $('#qText').textContent = item.pregunta;
-        setOption($('#mediaA'), $('#captionA'), item.opcion_a, item.imagen_a);
-        setOption($('#mediaB'), $('#captionB'), item.opcion_b, item.imagen_b);
-        show('play');
+        document.getElementById("qAuthor").innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
+            <img src="${item.foto_autor || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
+                 style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
+            <span>${item.autor || 'Anónimo'}</span>
+          </div>`;
+        document.getElementById("qText").textContent = item.pregunta;
+        setOption(document.getElementById("mediaA"), document.getElementById("captionA"), item.opcion_a, item.imagen_a);
+        setOption(document.getElementById("mediaB"), document.getElementById("captionB"), item.opcion_b, item.imagen_b);
+        show("play");
       };
+
       list.appendChild(el);
     });
   } catch (err) {
     console.error("Error cargando preguntas:", err);
-    $('#feedList').innerHTML = "<p class='muted'>⚠️ Error cargando preguntas.</p>";
+    document.getElementById("feedList").innerHTML = "<p class='muted'>⚠️ Error cargando preguntas.</p>";
   }
 }
 
@@ -1034,6 +1085,7 @@ function agregarPreguntaAExplorar(pregunta) {
  </script>
 </body>
 </html>
+
 
 
 
