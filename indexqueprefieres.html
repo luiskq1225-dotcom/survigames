@@ -461,6 +461,7 @@ function delUser() {
       reader.readAsDataURL(file);
     });
 
+
     // Al cargar la vista de login, mostrar la imagen si ya hay una guardada
     window.addEventListener("load", () => {
       const savedPhoto = localStorage.getItem("user_photo");
@@ -974,6 +975,7 @@ btnSignIn.addEventListener('click', async () => {
 
 
 // --- ACTUALIZAR UI ---
+// 🔐 Detectar inicio/cierre de sesión y redirigir si falta foto o nickname
 sb.auth.onAuthStateChange(async (_event, session) => {
   const user = session?.user;
   if (user) {
@@ -981,13 +983,33 @@ sb.auth.onAuthStateChange(async (_event, session) => {
     btnSignIn.classList.add('hidden');
     btnSignOut.classList.remove('hidden');
 
-    await syncUserNickname(); // 🧩 sincroniza nickname local
+    await syncUserNickname(); // sincroniza nickname local
+
+    // 🧠 Buscar si ya tiene perfil en Supabase
+    const { data: perfil } = await sb
+      .from("perfiles")
+      .select("foto, username")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const localFoto = localStorage.getItem("user_photo");
+    const localNick = localStorage.getItem("nickname");
+
+    // 🚨 Si no tiene nickname o foto → llevarlo a la vista de perfil
+    if ((!perfil?.foto && !localFoto) || !localNick) {
+      alert("📸 Antes de continuar, personaliza tu perfil con una foto y nombre.");
+      show('login');
+    } else {
+      show('play');
+    }
   } else {
     authUser.textContent = 'Invitado';
     btnSignIn.classList.remove('hidden');
     btnSignOut.classList.add('hidden');
+    show('play');
   }
 });
+
 
 
 // Revisar si ya está logueado al cargar la página
@@ -1070,5 +1092,6 @@ function agregarPreguntaAExplorar(pregunta) {
  </script>
 </body>
 </html>
+
 
 
