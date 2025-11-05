@@ -164,19 +164,16 @@ if (error || !data.user) {
   </ul>
 </div>
 
-  <div>
-    <label for="inpTags">Etiquetas / Tags</label>
-    <input id="inpTags" type="text" list="tagsSugeridos" placeholder="Ej: anime, snk, pareja, acción" />
-    <datalist id="tagsSugeridos"></datalist>
+<div>
+  <label for="inpTags">Etiquetas / Tags</label>
+  <input id="inpTags" type="text" list="tagsSugeridos" placeholder="Ej: anime, snk, pareja, acción" />
+  <datalist id="tagsSugeridos"></datalist>
 
-    <p class="muted" style="font-size:13px;margin-top:4px;">
-      Separa las etiquetas con comas (,). Ejemplo: <b>anime, snk, acción</b>
-    </p>
+  <p class="muted" style="font-size:13px;margin-top:4px;">
+    Separa las etiquetas con comas (,). Ejemplo: <b>anime, snk, acción</b>
+  </p>
+</div>
 
-    <p class="muted" style="font-size:13px;margin-top:4px;">
-      Separa las etiquetas con comas (,). Ejemplo: <b>anime, snk, acción</b>
-    </p>
-  </div>
   
 <p class="muted center">El texto queda centrado; puedes añadir imágenes a cada opción (URL o archivo).</p>
 
@@ -428,21 +425,30 @@ function delUser() {
       login: $('#viewLogin'),
     };
 
-    function show(which){
-      Object.values(views).forEach(v => v.classList.add('hidden'));
-      views[which].classList.remove('hidden');
-      if (which === 'play') loadRandom();
-      if (which === 'feed') {
-      if (which === 'create') {
-        loadTagSuggestions();
-      }
+function show(which) {
+  // Ocultar todas las vistas
+  Object.values(views).forEach(v => v.classList.add('hidden'));
+  views[which].classList.remove('hidden');
 
-        renderFeed();
-        loadPopularTags();
-      }
-      updateNav();
+  // Si estás en "play", carga una pregunta aleatoria
+  if (which === 'play') {
+    loadRandom();
+  }
 
-    }
+  // Si estás en "feed", carga las preguntas y tags populares
+  if (which === 'feed') {
+    renderFeed();
+    loadPopularTags();
+  }
+
+  // Si estás en "create", carga las sugerencias de tags
+  if (which === 'create') {
+    loadTagSuggestions();
+  }
+
+  // Actualizar la barra de navegación
+  updateNav();
+}
 
     
 
@@ -707,12 +713,11 @@ async function loadTagSuggestions() {
 
     if (error) throw error;
 
-    // Convertir todos los tags a un solo array limpio
     const tagsUnicos = new Set();
 
     data.forEach(row => {
       if (row.tags) {
-        // Dividir los tags separados por comas y limpiar espacios
+        // Acepta valores separados por coma o espacio
         row.tags.split(",").forEach(t => {
           const clean = t.trim().toLowerCase();
           if (clean) tagsUnicos.add(clean);
@@ -720,17 +725,19 @@ async function loadTagSuggestions() {
       }
     });
 
-    // Rellenar el datalist
+    // Rellenar datalist
     const list = document.getElementById("tagsSugeridos");
-    list.innerHTML = ""; // limpiar
+    list.innerHTML = ""; // limpiar viejo
 
     Array.from(tagsUnicos).forEach(tag => {
-      const option = document.createElement("option");
-      option.value = tag;
-      list.appendChild(option);
+      const opt = document.createElement("option");
+      opt.value = tag;
+      list.appendChild(opt);
     });
+
+    console.log(`✅ ${tagsUnicos.size} tags cargados en sugerencias.`);
   } catch (err) {
-    console.error("Error cargando tags sugeridos:", err);
+    console.error("⚠️ Error cargando tags sugeridos:", err);
   }
 }
 
@@ -1143,5 +1150,6 @@ function agregarPreguntaAExplorar(pregunta) {
  </script>
 </body>
 </html>
+
 
 
