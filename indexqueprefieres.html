@@ -166,7 +166,13 @@ if (error || !data.user) {
 
   <div>
     <label for="inpTags">Etiquetas / Tags</label>
-    <input id="inpTags" type="text" placeholder="Ej: anime, snk, pareja, acción" />
+    <input id="inpTags" type="text" list="tagsSugeridos" placeholder="Ej: anime, snk, pareja, acción" />
+    <datalist id="tagsSugeridos"></datalist>
+
+    <p class="muted" style="font-size:13px;margin-top:4px;">
+      Separa las etiquetas con comas (,). Ejemplo: <b>anime, snk, acción</b>
+    </p>
+
     <p class="muted" style="font-size:13px;margin-top:4px;">
       Separa las etiquetas con comas (,). Ejemplo: <b>anime, snk, acción</b>
     </p>
@@ -427,11 +433,18 @@ function delUser() {
       views[which].classList.remove('hidden');
       if (which === 'play') loadRandom();
       if (which === 'feed') {
+      if (which === 'create') {
+        loadTagSuggestions();
+      }
+
         renderFeed();
         loadPopularTags();
       }
       updateNav();
+
     }
+
+    
 
     $('#navPlay').onclick = () => show('play');
     $('#navCreate').onclick = () => show('create');
@@ -682,9 +695,47 @@ B) ${current.b}`;
       }
     };
 
+
+/*******************************
+ * 🧠 Cargar sugerencias de tags
+ *******************************/
+async function loadTagSuggestions() {
+  try {
+    const { data, error } = await sb
+      .from("preguntas")
+      .select("tags");
+
+    if (error) throw error;
+
+    // Convertir todos los tags a un solo array limpio
+    const tagsUnicos = new Set();
+
+    data.forEach(row => {
+      if (row.tags) {
+        // Dividir los tags separados por comas y limpiar espacios
+        row.tags.split(",").forEach(t => {
+          const clean = t.trim().toLowerCase();
+          if (clean) tagsUnicos.add(clean);
+        });
+      }
+    });
+
+    // Rellenar el datalist
+    const list = document.getElementById("tagsSugeridos");
+    list.innerHTML = ""; // limpiar
+
+    Array.from(tagsUnicos).forEach(tag => {
+      const option = document.createElement("option");
+      option.value = tag;
+      list.appendChild(option);
+    });
+  } catch (err) {
+    console.error("Error cargando tags sugeridos:", err);
+  }
+}
+
+
     // FEED
-// ✅ Mostrar preguntas con foto y autor en el feed
-// ✅ Mostrar preguntas con foto y autor en el feed
 async function renderFeed() {
   try {
     const list = document.getElementById("feedList");
@@ -1092,6 +1143,5 @@ function agregarPreguntaAExplorar(pregunta) {
  </script>
 </body>
 </html>
-
 
 
