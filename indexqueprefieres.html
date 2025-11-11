@@ -177,6 +177,14 @@ if (error || !data.user) {
   
 <p class="muted center">El texto queda centrado; puedes añadir imágenes a cada opción (URL o archivo).</p>
 
+
+          <!-- 💥 Imagen principal (banner opcional) -->
+      <div class="stack">
+        <label for="urlQ">Imagen principal (opcional)</label>
+        <input id="urlQ" type="url" placeholder="URL de imagen principal (opcional)" />
+        <input id="fileQ" type="file" accept="image/*" />
+        <div class="thumbs"><div class="thumb"><img id="prevQ" alt=""/></div></div>
+      </div>
       <div class="stack">
         <div>
           <label for="inpQ">Pregunta</label>
@@ -521,71 +529,109 @@ function show(which) {
     urlA?.addEventListener('change', () => { prevA.src = urlA.value || ''; });
     urlB?.addEventListener('change', () => { prevB.src = urlB.value || ''; });
 
+    // Imagen principal de la pregunta
+    const fileQ = $('#fileQ');
+    const urlQ = $('#urlQ');
+    const prevQ = $('#prevQ');
+
+    fileQ?.addEventListener('change', async () => {
+      const f = fileQ.files?.[0];
+      prevQ.src = f ? await readFileToDataUrl(f) : '';
+    });
+    urlQ?.addEventListener('change', () => {
+      prevQ.src = urlQ.value || '';
+    });
+
+
+
+
+
 // ✅ Guardar pregunta con autor y foto del perfil
 $('#saveQ').onclick = async () => {
-  const u = getUser();
-  if (!u) return alert('Primero inicia sesión (nickname o cuenta).');
+  try {
+    const u = getUser();
+    if (!u) return alert('Primero inicia sesión (nickname o cuenta).');
 
-  const q = $('#inpQ').value.trim();
-  const a = $('#inpA').value.trim();
-  const b = $('#inpB').value.trim();
-  const aImg = await resolveImage(urlA, fileA);
-  const bImg = await resolveImage(urlB, fileB);
-  const tags = $('#inpTags')?.value?.trim() || null;
+    const q = $('#inpQ').value.trim();
+    const a = $('#inpA').value.trim();
+    const b = $('#inpB').value.trim();
+    const tags = $('#inpTags')?.value?.trim() || '';
 
-  if (!q || !a || !b) return alert('Completa la pregunta y ambas opciones.');
+    // Leer imágenes (principal, A y B)
+    const qImg = await resolveImage(urlQ, fileQ);
+    const aImg = await resolveImage(urlA, fileA);
+    const bImg = await resolveImage(urlB, fileB);
 
-  // Intentar obtener datos del usuario actual
-  const { data: { user } } = await sb.auth.getUser();
-  let perfil = null;
-  let fotoFinal = null;
+    if (!q || !a || !b)
+      return alert('Completa la pregunta y ambas opciones.');
 
-  if (user) {
-    const { data: p } = await sb
-      .from("perfiles")
-      .select("username, foto")
-      .eq("id", user.id)
-      .maybeSingle();
+    console.log("🧠 Datos antes de insertar:", { q, a, b, tags, qImg });
 
-    perfil = p;
-  }
+    // Intentar obtener datos del usuario actual
+    const { data: userData, error: userError } = await sb.auth.getUser();
+    if (userError) console.warn("Error obteniendo user:", userError);
 
-  // 🔁 Tomar la foto local si no hay en Supabase
-  const fotoLocal = localStorage.getItem("user_photo");
-  fotoFinal = perfil?.foto || fotoLocal || null;
+    const user = userData?.user;
+    let perfil = null;
+    let fotoFinal = null;
 
-  // Insertar en la tabla preguntas
-const { error } = await sb.from("preguntas").insert({
-  pregunta: q,
-  opcion_a: a,
-  opcion_b: b,
-  imagen_a: aImg || null,
-  imagen_b: bImg || null,
-  autor: perfil?.username || u.nick || "Anónimo",
-  foto_autor: fotoFinal || null,
-  tags: tags ? tags.toString() : '', // siempre como texto
-  votos_a: 0,
-  votos_b: 0,
-  created_at: new Date().toISOString()
-});
+    if (user) {
+      const { data: p, error: perError } = await sb
+        .from("perfiles")
+        .select("username, foto")
+        .eq("id", user.id)
+        .maybeSingle();
 
+      if (perError) console.warn("Error buscando perfil:", perError);
+      perfil = p;
+    }
 
-  if (error) {
-    console.error(error);
-    alert('⚠️ Error al publicar la pregunta.');
-  } else {
-    alert('✅ Pregunta publicada correctamente.');
-    $('#inpQ').value = '';
-    $('#inpA').value = '';
-    $('#inpB').value = '';
-    $('#inpTags').value = '';
-    urlA.value = '';
-    urlB.value = '';
-    if (prevA) prevA.src = '';
-    if (prevB) prevB.src = '';
-    if (fileA) fileA.value = '';
-    if (fileB) fileB.value = '';
-    show('play');
+    const fotoLocal = localStorage.getItem("user_photo");
+    fotoFinal = perfil?.foto || fotoLocal || null;
+
+    // 🔥 Insertar en la tabla preguntas
+    const { data, error } = await sb.from("preguntas").insert({
+      pregunta: q,
+      opcion_a: a,
+      opcion_b: b,
+      imagen_a: aImg || null,
+      imagen_b: bImg || null,
+      imagen_pregunta: qImg || null, // 💥 nueva imagen principal
+      autor: perfil?.username || u.nick || "Anónimo",
+      foto_autor: fotoFinal || null,
+      tags: tags.toString(),
+      votos_a: 0,
+      votos_b: 0,
+      created_at: new Date().toISOString()
+    }).select();
+
+    if (error) {
+      console.error("❌ Error al insertar:", error);
+      alert('⚠️ Error al publicar la pregunta. Revisa la consola.');
+    } else {
+      console.log("✅ Insert correcto:", data);
+      alert('✅ Pregunta publicada correctamente.');
+
+      // limpiar formulario
+      $('#inpQ').value = '';
+      $('#inpA').value = '';
+      $('#inpB').value = '';
+      $('#inpTags').value = '';
+      urlA.value = '';
+      urlB.value = '';
+      urlQ.value = '';
+      if (prevA) prevA.src = '';
+      if (prevB) prevB.src = '';
+      if (prevQ) prevQ.src = '';
+      if (fileA) fileA.value = '';
+      if (fileB) fileB.value = '';
+      if (fileQ) fileQ.value = '';
+
+      show('play');
+    }
+  } catch (err) {
+    console.error("💥 Error inesperado en saveQ:", err);
+    alert('⚠️ Ocurrió un error inesperado. Revisa la consola.');
   }
 };
 
