@@ -555,16 +555,20 @@ $('#saveQ').onclick = async () => {
   fotoFinal = perfil?.foto || fotoLocal || null;
 
   // Insertar en la tabla preguntas
-  const { error } = await sb.from("preguntas").insert({
-    pregunta: q,
-    opcion_a: a,
-    opcion_b: b,
-    imagen_a: aImg,
-    imagen_b: bImg,
-    autor: perfil?.username || u.nick || "Anónimo",
-    foto_autor: fotoFinal,
-    tags: tags
-  });
+const { error } = await sb.from("preguntas").insert({
+  pregunta: q,
+  opcion_a: a,
+  opcion_b: b,
+  imagen_a: aImg || null,
+  imagen_b: bImg || null,
+  autor: perfil?.username || u.nick || "Anónimo",
+  foto_autor: fotoFinal || null,
+  tags: tags ? tags.toString() : '', // siempre como texto
+  votos_a: 0,
+  votos_b: 0,
+  created_at: new Date().toISOString()
+});
+
 
   if (error) {
     console.error(error);
@@ -717,9 +721,9 @@ async function loadTagSuggestions() {
 
     data.forEach(row => {
       if (row.tags) {
-        // Acepta valores separados por coma o espacio
-        row.tags.split(",").forEach(t => {
-          const clean = t.trim().toLowerCase();
+        const t = Array.isArray(row.tags) ? row.tags : row.tags.split(",");
+        t.forEach(x => {
+          const clean = x.trim().toLowerCase();
           if (clean) tagsUnicos.add(clean);
         });
       }
@@ -992,6 +996,22 @@ async function filterByTag(tag) {
     console.error("Error filtrando por tag:", err);
   }
 }
+// ✅ Función que actualiza la barra de navegación
+function updateNav() {
+  const navButtons = document.querySelectorAll('nav button');
+
+  // Quitar color activo de todos
+  navButtons.forEach(btn => btn.classList.remove('primary'));
+
+  // Detectar qué vista está visible
+  for (const [key, view] of Object.entries(views)) {
+    if (!view.classList.contains('hidden')) {
+      const navId = `nav${key.charAt(0).toUpperCase() + key.slice(1)}`;
+      const btn = document.getElementById(navId);
+      if (btn) btn.classList.add('primary'); // resalta el botón activo
+    }
+  }
+}
 
 
     // START
@@ -1150,6 +1170,5 @@ function agregarPreguntaAExplorar(pregunta) {
  </script>
 </body>
 </html>
-
 
 
