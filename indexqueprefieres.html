@@ -547,8 +547,10 @@ function show(which) {
 
 
 // ✅ Guardar pregunta con autor y foto del perfil
+// ✅ Guardar pregunta con autor, foto del perfil e imagen principal opcional (versión debug)
 $('#saveQ').onclick = async () => {
   try {
+    console.log("📩 Publicando pregunta...");
     const u = getUser();
     if (!u) return alert('Primero inicia sesión (nickname o cuenta).');
 
@@ -557,17 +559,29 @@ $('#saveQ').onclick = async () => {
     const b = $('#inpB').value.trim();
     const tags = $('#inpTags')?.value?.trim() || '';
 
-    // Leer imágenes (principal, A y B)
-    const qImg = await resolveImage(urlQ, fileQ);
-    const aImg = await resolveImage(urlA, fileA);
-    const bImg = await resolveImage(urlB, fileB);
+    console.log("📋 Campos base:", { q, a, b, tags });
+
+    // Leer imágenes (con timeout de seguridad)
+    const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject('Timeout lectura imagen'), ms));
+
+    const qImg = await Promise.race([resolveImage(urlQ, fileQ), timeout(3000)]).catch(e => {
+      console.warn("⚠️ Error/timeout leyendo imagen principal:", e);
+      return null;
+    });
+    const aImg = await Promise.race([resolveImage(urlA, fileA), timeout(3000)]).catch(e => {
+      console.warn("⚠️ Error/timeout leyendo imagen A:", e);
+      return null;
+    });
+    const bImg = await Promise.race([resolveImage(urlB, fileB), timeout(3000)]).catch(e => {
+      console.warn("⚠️ Error/timeout leyendo imagen B:", e);
+      return null;
+    });
+
+    console.log("🖼️ Imágenes listas:", { qImg, aImg, bImg });
 
     if (!q || !a || !b)
       return alert('Completa la pregunta y ambas opciones.');
 
-    console.log("🧠 Datos antes de insertar:", { q, a, b, tags, qImg });
-
-    // Intentar obtener datos del usuario actual
     const { data: userData, error: userError } = await sb.auth.getUser();
     if (userError) console.warn("Error obteniendo user:", userError);
 
@@ -581,13 +595,14 @@ $('#saveQ').onclick = async () => {
         .select("username, foto")
         .eq("id", user.id)
         .maybeSingle();
-
       if (perError) console.warn("Error buscando perfil:", perError);
       perfil = p;
     }
 
     const fotoLocal = localStorage.getItem("user_photo");
     fotoFinal = perfil?.foto || fotoLocal || null;
+
+    console.log("👤 Autor listo:", { perfil, fotoFinal });
 
     // 🔥 Insertar en la tabla preguntas
     const { data, error } = await sb.from("preguntas").insert({
@@ -596,7 +611,7 @@ $('#saveQ').onclick = async () => {
       opcion_b: b,
       imagen_a: aImg || null,
       imagen_b: bImg || null,
-      imagen_pregunta: qImg || null, // 💥 nueva imagen principal
+      imagen_pregunta: qImg || null,
       autor: perfil?.username || u.nick || "Anónimo",
       foto_autor: fotoFinal || null,
       tags: tags.toString(),
@@ -605,35 +620,39 @@ $('#saveQ').onclick = async () => {
       created_at: new Date().toISOString()
     }).select();
 
+    console.log("📤 Respuesta Supabase:", { data, error });
+
     if (error) {
       console.error("❌ Error al insertar:", error);
       alert('⚠️ Error al publicar la pregunta. Revisa la consola.');
-    } else {
-      console.log("✅ Insert correcto:", data);
-      alert('✅ Pregunta publicada correctamente.');
-
-      // limpiar formulario
-      $('#inpQ').value = '';
-      $('#inpA').value = '';
-      $('#inpB').value = '';
-      $('#inpTags').value = '';
-      urlA.value = '';
-      urlB.value = '';
-      urlQ.value = '';
-      if (prevA) prevA.src = '';
-      if (prevB) prevB.src = '';
-      if (prevQ) prevQ.src = '';
-      if (fileA) fileA.value = '';
-      if (fileB) fileB.value = '';
-      if (fileQ) fileQ.value = '';
-
-      show('play');
+      return;
     }
+
+    alert('✅ Pregunta publicada correctamente.');
+    console.log("✅ Insert correcto:", data);
+
+    // limpiar formulario
+    $('#inpQ').value = '';
+    $('#inpA').value = '';
+    $('#inpB').value = '';
+    $('#inpTags').value = '';
+    urlA.value = '';
+    urlB.value = '';
+    urlQ.value = '';
+    if (prevA) prevA.src = '';
+    if (prevB) prevB.src = '';
+    if (prevQ) prevQ.src = '';
+    if (fileA) fileA.value = '';
+    if (fileB) fileB.value = '';
+    if (fileQ) fileQ.value = '';
+
+    show('play');
   } catch (err) {
     console.error("💥 Error inesperado en saveQ:", err);
     alert('⚠️ Ocurrió un error inesperado. Revisa la consola.');
   }
 };
+
 
 
     // PLAY
