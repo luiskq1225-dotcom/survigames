@@ -84,11 +84,11 @@
   <section id="loginSection" style="text-align:center; margin:40px 0;">
   <h2>Iniciar sesión</h2>
   <input type="email" id="emailInput" placeholder="Ingresa tu correo" /><br>
-  <input type="text" id="nicknameInput" placeholder="Nombre de usuario" /><br>
-  <button id="btnSignIn">Enviar enlace mágico</button>
-
-</section>
-
+  <input type="text" id="nicknameInput" placeholder="Nombre de usuario (para registrarte)" /><br>
+  <input type="password" id="passwordInput" placeholder="Contraseña (mínimo 6 caracteres)" minlength="6" /><br>
+  <button id="btnSignIn" class="btn">Iniciar sesión</button>
+  <button id="btnRegister" class="btn alt">Crear cuenta</button>
+  <p id="loginStatus" role="status" style="color:#9aa4b2"></p>
 
 </section>
 
@@ -107,7 +107,7 @@
         <a href="#contact">Contacto</a>
         <a href="#" id="btnAccount">Cuenta</a>
         <a class="btn" href="https://luiskq1225-dotcom.github.io/survigames/indexqueprefieres.html">Jugar</a>
-        <span id="navUser" style="color:#9aa4b2; font-size:14px; margin-left:12px;"></span>
+
       </nav>
     </div>
   </div>
@@ -122,7 +122,7 @@
           src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
           style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid #3fa7ff;box-shadow:0 0 12px rgba(63,167,255,.4);" />
       <br>
-      <input type="file" id="accFile" accept="image/*" style="margin-top:8px;" />
+      <p class="muted" style="font-size:12px">Foto predeterminada; las fotos personalizadas se habilitarán más adelante.</p>
     </div>
 
     <input type="text" id="accUser" placeholder="Tu nombre de usuario" style="padding:8px 10px;border-radius:8px;border:1px solid #303a5a;background:#0f172a;color:#cfd6ff;" />
@@ -197,7 +197,7 @@
     </section>
 
         <!-- INFO PRINCIPAL -->
-    <section id="info" class="grid cols-2">
+    <section id="preferencias" class="grid cols-2">
       <div class="card">
         <h3>¿De qué va que prefieres?</h3>
         <div class="content">
@@ -312,168 +312,123 @@
   </main>
 
 <script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
-// 🔹 Configuración Supabase
-const supabaseUrl = "https://jrzpqsgjghopnnntxypp.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU";
-const sb = createClient(supabaseUrl, supabaseKey);
+const firebaseConfig = {
+  apiKey: "AIzaSyDyVuhGfDbGqYUUMW3gM3WmH_rD7iYpZec",
+  authDomain: "survigames-5466d.firebaseapp.com",
+  projectId: "survigames-5466d",
+  storageBucket: "survigames-5466d.firebasestorage.app",
+  messagingSenderId: "393143398225",
+  appId: "1:393143398225:web:0ff9644034406f8a462d70"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = id => document.getElementById(id);
+const defaultPhoto = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+const showError = err => ({
+  "auth/email-already-in-use": "Ese correo ya tiene una cuenta.",
+  "auth/invalid-email": "Revisá el correo electrónico.",
+  "auth/invalid-credential": "Correo o contraseña incorrectos.",
+  "auth/weak-password": "Usá una contraseña de al menos 6 caracteres.",
+  "auth/operation-not-allowed": "Activá Correo electrónico/contraseña en Firebase Authentication.",
+  "permission-denied": "Firestore bloqueó el acceso. Revisá las reglas de seguridad."
+}[err.code] || `Ocurrió un error: ${err.message}`);
+const setStatus = (id, message) => { $(id).textContent = message; };
 
-// 🔹 Referencias del DOM
-const loginSection = document.getElementById("loginSection");
-const welcomeSection = document.getElementById("welcomeSection");
-const inputEmail = document.getElementById("emailInput");
-const inputNickname = document.getElementById("nicknameInput");
-const btnSignIn = document.getElementById("btnSignIn");
-const btnSignOut = document.getElementById("btnSignOut");
-const userEmail = document.getElementById("userEmail");
-
-
-// 🔸 Enviar enlace mágico con nickname incluido
-btnSignIn.addEventListener("click", async () => {
-  const email = inputEmail.value.trim();
-  const nickname = inputNickname.value.trim();
-
-
-  if (!email) return alert("⚠️ Debes ingresar un correo.");
-  if (!nickname) return alert("⚠️ Ingresa un nombre de usuario.");
-
-  const { error } = await sb.auth.signInWithOtp({
-    email: email,
-    options: {
-      data: { nickname: nickname }, // ✅ guarda el nickname en user_metadata
-      emailRedirectTo: "https://luiskq1225-dotcom.github.io/survigames/",
-    },
-  });
-
-  if (error) {
-    alert("❌ Error al enviar el enlace: " + error.message);
-  } else {
-    alert(`📩 Te enviamos un enlace mágico a ${email}. Revisa tu correo.`);
+async function ensureProfile(user, preferredName = "") {
+  const ref = doc(db, "perfiles", user.uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    const username = (preferredName || user.displayName || user.email.split("@")[0]).trim().slice(0, 30);
+    await setDoc(ref, { username, createdAt: serverTimestamp() });
+    return { username };
   }
+  return snap.data();
+}
+
+$("btnRegister").addEventListener("click", async () => {
+  const email = $("emailInput").value.trim();
+  const password = $("passwordInput").value;
+  const username = $("nicknameInput").value.trim();
+  if (!email || !username || password.length < 6) return setStatus("loginStatus", "Ingresá correo, nombre de usuario y contraseña de al menos 6 caracteres.");
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(result.user, { displayName: username.slice(0, 30) });
+    await ensureProfile(result.user, username);
+    setStatus("loginStatus", "¡Cuenta creada!");
+  } catch (err) { setStatus("loginStatus", showError(err)); }
 });
 
-// === PERFIL / CUENTA ===
-const accPhoto = document.getElementById("accPhoto");
-const accFile = document.getElementById("accFile");
-const accUser = document.getElementById("accUser");
-const accSave = document.getElementById("accSave");
-const accLogout = document.getElementById("accLogout");
-const accStatus = document.getElementById("accStatus");
-const btnAccount = document.getElementById("btnAccount");
+$("btnSignIn").addEventListener("click", async () => {
+  const email = $("emailInput").value.trim();
+  const password = $("passwordInput").value;
+  if (!email || !password) return setStatus("loginStatus", "Ingresá tu correo y contraseña.");
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    setStatus("loginStatus", "Sesión iniciada.");
+  } catch (err) { setStatus("loginStatus", showError(err)); }
+});
 
-// Mostrar la vista de cuenta
-btnAccount?.addEventListener("click", async () => {
-  document.getElementById("loginSection").style.display = "none";
-  document.getElementById("welcomeSection").style.display = "none";
-  document.getElementById("viewAccount").style.display = "block";
+async function loadAccount() {
+  const user = auth.currentUser;
+  if (!user) return setStatus("accStatus", "Primero iniciá sesión.");
+  try {
+    const profile = await ensureProfile(user);
+    $("accUser").value = profile.username || "";
+    $("accPhoto").src = defaultPhoto;
+    setStatus("accStatus", "");
+  } catch (err) { setStatus("accStatus", showError(err)); }
+}
+
+$("btnAccount").addEventListener("click", async e => {
+  e.preventDefault();
+  if (!auth.currentUser) {
+    $("loginSection").scrollIntoView({ behavior: "smooth" });
+    return setStatus("loginStatus", "Iniciá sesión para ver tu cuenta.");
+  }
+  $("viewAccount").style.display = "block";
+  $("viewAccount").scrollIntoView({ behavior: "smooth" });
   await loadAccount();
 });
 
-// Cargar datos de la cuenta
-async function loadAccount() {
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) {
-    alert("Primero inicia sesión.");
-    return;
-  }
+$("accSave").addEventListener("click", async () => {
+  const user = auth.currentUser;
+  const username = $("accUser").value.trim();
+  if (!user) return setStatus("accStatus", "Iniciá sesión primero.");
+  if (username.length < 2 || username.length > 30) return setStatus("accStatus", "El nombre debe tener entre 2 y 30 caracteres.");
+  try {
+    await setDoc(doc(db, "perfiles", user.uid), { username }, { merge: true });
+    await updateProfile(user, { displayName: username });
+    $("navUser").textContent = `👤 ${username}`;
+    $("userEmail").textContent = `Bienvenido, ${username}`;
+    setStatus("accStatus", "✅ Cambios guardados.");
+  } catch (err) { setStatus("accStatus", showError(err)); }
+});
 
-  const { data, error } = await sb
-    .from("perfiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (data) {
-    accUser.value = data.username || "";
-    accPhoto.src = data.foto || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-  } else {
-    // Crear perfil si no existe
-    await sb.from("perfiles").insert({
-      id: user.id,
-      username: user.email.split("@")[0],
-      foto: "https://cdn-icons-png.flaticon.com/512/149/149071.png"
-    });
-    accUser.value = user.email.split("@")[0];
-  }
+async function logout() {
+  try { await signOut(auth); $("viewAccount").style.display = "none"; }
+  catch (err) { setStatus("accStatus", showError(err)); }
 }
+$("accLogout").addEventListener("click", logout);
+$("btnSignOut").addEventListener("click", logout);
 
-// Subir foto localmente (preview)
-accFile?.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => accPhoto.src = reader.result;
-  reader.readAsDataURL(file);
+onAuthStateChanged(auth, async user => {
+  $("loginSection").style.display = user ? "none" : "block";
+  $("welcomeSection").style.display = user ? "block" : "none";
+  $("viewAccount").style.display = "none";
+  $("navUser").textContent = "";
+  if (!user) return;
+  let username = user.displayName || user.email.split("@")[0];
+  try { username = (await ensureProfile(user)).username || username; }
+  catch (err) { setStatus("accStatus", showError(err)); }
+  $("userEmail").textContent = `Bienvenido, ${username}`;
+  $("navUser").textContent = `👤 ${username}`;
 });
-
-// Guardar cambios
-accSave?.addEventListener("click", async () => {
-  const username = accUser.value.trim();
-  if (!username) return alert("Escribe un nombre de usuario.");
-
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return alert("Debes iniciar sesión.");
-
-  // Verificar si ya existe el username
-  const { data: exists } = await sb
-    .from("perfiles")
-    .select("id")
-    .eq("username", username)
-    .neq("id", user.id)
-    .maybeSingle();
-
-  if (exists) {
-    accStatus.textContent = "⚠️ Ese nombre ya está en uso.";
-    accStatus.style.color = "#ff5a76";
-    return;
-  }
-
-  const { error } = await sb
-    .from("perfiles")
-    .update({ username, foto: accPhoto.src })
-    .eq("id", user.id);
-
-  if (error) {
-    accStatus.textContent = "❌ Error al guardar.";
-    accStatus.style.color = "#ff5a76";
-  } else {
-    accStatus.textContent = "✅ Cambios guardados.";
-    accStatus.style.color = "#35d399";
-  }
-});
-
-// Cerrar sesión desde la vista de cuenta
-accLogout?.addEventListener("click", async () => {
-  await sb.auth.signOut();
-  alert("👋 Sesión cerrada correctamente.");
-  window.location.reload();
-});
-
-
-// 🔸 Verificar sesión y mostrar nickname
-sb.auth.getUser().then(({ data, error }) => {
-  if (data?.user) {
-    const user = data.user;
-    const nickname = user.user_metadata?.nickname || user.email;
-
-    loginSection.style.display = "none";
-    welcomeSection.style.display = "block";
-    userEmail.textContent = `Bienvenido, ${nickname}`;
-
-    // Mostrar en la barra superior si existe
-    const navUser = document.getElementById("navUser");
-    if (navUser) navUser.textContent = `👤 ${nickname}`;
-      }
-    });
-
-    // 🔸 Cerrar sesión
-    btnSignOut.addEventListener("click", async () => {
-      await sb.auth.signOut();
-      alert("👋 Sesión cerrada correctamente.");
-      window.location.reload();
-    });
-    </script>
+</script>
 
 
 
@@ -532,6 +487,9 @@ sb.auth.getUser().then(({ data, error }) => {
 
 </body>
 </html>
+
+
+
 
 
 
