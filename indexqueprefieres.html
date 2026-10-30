@@ -88,18 +88,6 @@
 </head>
 <body>
 
-  <script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-
-// Verificar si hay usuario logueado
-const { data, error } = await sb.auth.getUser();
-
-if (error || !data.user) {
-  window.location.href = "index.html"; // Redirige si no hay sesión
-}
-</script>
-
   <div class="app">
     <header>
       <div class="brand">
@@ -148,6 +136,7 @@ if (error || !data.user) {
           <button id="share" class="btn">Compartir</button>
         </div>
       </div>
+      <div id="playStatus" class="muted center" role="status" style="margin-top:10px"></div>
     </section>
 
     <!-- CREATE -->
@@ -157,8 +146,8 @@ if (error || !data.user) {
   <h4 style="margin:0; color:#7c5cff;">🧠 Consejos para subir imágenes</h4>
   <ul style="margin:8px 0 0 18px; color:#9aa4b2; font-size:14px; line-height:1.5;">
     <li>Puedes <b>pegar un enlace directo</b> de imagen (ej: <i>https://i.pinimg.com/....jpg</i>).</li>
-    <li>O si preferís, <b>subí una imagen desde tu dispositivo</b> (botón “Choose File”).</li>
-    <li>Si ponés ambos, se usará <b>la URL primero</b> (el archivo queda de respaldo).</li>
+    <li>Las imágenes se pueden enlazar mediante <b>URL HTTPS</b>. La subida directa de archivos se habilitará al configurar Storage.</li>
+    <li>La URL es la imagen que se comparte con todos los jugadores; el archivo local solo sirve como vista previa.</li>
     <li>Usá imágenes <b>horizontales (16:9)</b> para que se vean bien en la vista de juego.</li>
     <li>Los formatos recomendados son <b>JPG</b> o <b>PNG</b>, tamaño menor a <b>1 MB</b>.</li>
   </ul>
@@ -175,7 +164,7 @@ if (error || !data.user) {
 </div>
 
   
-<p class="muted center">El texto queda centrado; puedes añadir imágenes a cada opción (URL o archivo).</p>
+<p class="muted center">El texto queda centrado; podés añadir imágenes públicas mediante URL.</p>
 
 
           <!-- 💥 Imagen principal (banner opcional) -->
@@ -214,12 +203,13 @@ if (error || !data.user) {
     </section>
 
     <div id="explorarContainer" class="explorar-lista">
-      <!-- Aquí se insertarán automáticamente las preguntas nuevas -->
+      <!-- Las preguntas se consultan desde Firestore en Explorar -->
     </div>
 
     <!-- FEED -->
     <section id="viewFeed" class="card stack hidden">
       <h3 style="margin:0">Explorar preguntas</h3>
+      <div class="row two"><button id="feedLatest" class="primary">Recientes</button><button id="feedMine">Mis preguntas</button></div>
 
       <!-- 🔍 Buscador de tags -->
       <div class="row two" style="align-items:center;">
@@ -233,20 +223,14 @@ if (error || !data.user) {
       </div>
 
       <div id="feedList" class="stack"></div>
+      <button id="feedMore" class="hidden">Cargar más</button>
     </section>
 
-    <!-- 🔹 Contenedor de tags populares -->
-    <div id="popularTags" class="row" style="flex-wrap:wrap; gap:8px; margin-bottom:8px;">
-      <p class="muted" id="tagsLoading">Cargando etiquetas populares...</p>
-    </div>
-
-    <div id="feedList" class="stack"></div>
-  </section>
 
     <!-- LOGIN -->
     <section id="viewLogin" class="card stack hidden">
       <h3 style="margin:0" class="center">Tu usuario</h3>
-      <p class="muted center">Por ahora es local (nickname). En la versión online será con email/Google.</p>
+      <p class="muted center">Tu sesión se comparte con la página principal de Survigames. Podés personalizar tu nombre aquí.</p>
       <div class="row two">
         <div>
           <label for="nick">Nickname</label>
@@ -260,973 +244,370 @@ if (error || !data.user) {
         <div class="stack">
           <label>&nbsp;</label>
           <button id="setNick" class="primary">Guardar</button>
-          <button id="logout" class="danger">Borrar usuario local</button>
+          <button id="logout" class="danger">Cerrar sesión</button>
         </div>
       </div>
       <p class="muted">Estado: <span id="authState">—</span></p>
     </section>
 
     <footer>
-      Hecho con ❤️ para prototipo. Votos, usuario e imágenes (base64/URL) guardados en <strong>localStorage</strong>.
+      Hecho con ❤️ para Survigames. Preguntas y votos guardados en Firebase Firestore.
     </footer>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script>
-    /*********************************
-     * PEQUEÑA "BASE DE DATOS" LOCAL *
-     *********************************/
-    const DB_KEY = 'qp_db_v2_images';
-    const USER_KEY = 'qp_user_v1';
-
-    // ====== CONFIGURACIÓN SUPABASE ======
-    const SUPABASE_URL = "https://jrzpqsgjghopnnntxypp.supabase.co"; // tu URL real
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenBxc2dqZ2hvcG5ubnR4eXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNDc5ODcsImV4cCI6MjA3NDgyMzk4N30.Wv-4VQOYtgH5q_X8AsnwJSXqvgWfiGul7hki08KoemU";
-
-    // Crear el cliente global de Supabase
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    // ====== AUTENTICACIÓN (SUPABASE) ======
-    const AUTH_REDIRECT = window.location.origin;
-    let CURRENT_USER = null;
-
-    function setAuthUI(user) {
-      const elUser = document.getElementById("authUser");
-      const btnIn = document.getElementById("btnSignIn");
-      const btnOut = document.getElementById("btnSignOut");
-
-      if (user) {
-        elUser.textContent = user.email || "Usuario";
-        btnIn.classList.add("hidden");
-        btnOut.classList.remove("hidden");
-      } else {
-        elUser.textContent = "Invitado";
-        btnIn.classList.remove("hidden");
-        btnOut.classList.add("hidden");
-      }
-    }
-
-    // ✅ Sincronizar nickname local con Supabase
-async function syncUserNickname() {
-  const { data } = await sb.auth.getSession();
-  const user = data?.session?.user;
-
-  if (!user) return;
-
-  let localUser = getUser();
-
-  if (!localUser) {
-    // Buscar si ya hay nickname
-    let nickname = localStorage.getItem("nickname");
-
-    // Si no hay nickname guardado, pedimos uno
-    if (!nickname) {
-      nickname = prompt("Ingresa tu nickname (solo la primera vez):");
-      if (nickname) {
-        localStorage.setItem("nickname", nickname.trim());
-      } else {
-        alert("Debes tener un nickname para continuar.");
-        return;
-      }
-    }
-
-    // Guardar también en tu sistema local
-    setUser(nickname.trim());
-  }
-}
-
-  sb.auth.getSession().then(({ data }) => {
-    CURRENT_USER = data?.session?.user || null;
-    setAuthUI(CURRENT_USER);
-  });
-
-  sb.auth.onAuthStateChange((_event, session) => {
-    CURRENT_USER = session?.user || null;
-    setAuthUI(CURRENT_USER);
-  });
-
-
-
-    function loadDB() {
-      const raw = localStorage.getItem(DB_KEY);
-      if (raw) try { return JSON.parse(raw); } catch {}
-      // semilla inicial
-      const seed = [
-        mkQ('¿Qué prefieres?', 'Dormir 5 min más', 'Despertar sin sueño', 'sistema', null, null),
-        mkQ('¿Qué prefieres?', 'Comer pizza por un año', 'Comer sushi por un año', 'sistema', null, null),
-        mkQ('¿Qué prefieres?', 'Tu novio salga con su ex a café', 'Que pierda una pierna 😬', 'anon', null, null),
-        mkQ('¿Qué prefieres?', 'Tal chica de anime', 'Tal otra chica de anime', 'anon', null, null)
-      ];
-      saveDB(seed);
-      return seed;
-    }
-    function saveDB(arr){ localStorage.setItem(DB_KEY, JSON.stringify(arr)); }
-
-    function mkQ(q, a, b, author, aImg, bImg) {
-      return { id: crypto.randomUUID(), q, a, b, aImg: aImg||null, bImg: bImg||null, author, votesA: 0, votesB: 0, voters: {} };
-    }
-
- function setUser(nick) {
-  const nickTrim = nick.trim();
-  localStorage.setItem(USER_KEY, JSON.stringify({ id: 'local:' + nickTrim.toLowerCase(), nick: nickTrim }));
-  localStorage.setItem("nickname", nickTrim); // redundancia por si acaso
-}
-
-function getUser() {
-  // Prioridad 1: datos locales
-  const raw = localStorage.getItem(USER_KEY);
-  if (raw) {
-    try { return JSON.parse(raw); } catch {}
-  }
-
-  // Prioridad 2: nickname directo
-  const nick = localStorage.getItem("nickname");
-  if (nick) return { id: 'local:' + nick.toLowerCase(), nick };
-
-  // Prioridad 3: usuario Supabase (solo correo)
-  const session = window._lastSupabaseSession; // guardaremos aquí la sesión más reciente
-  const email = session?.user?.email;
-  if (email) return { id: 'supabase:' + email.toLowerCase(), nick: email };
-
-  return null;
-}
-// 🧠 Asegurar que el nickname se guarde si el usuario está autenticado en Supabase
-(async () => {
-  const { data } = await sb.auth.getSession();
-  const user = data?.session?.user;
-  if (user) {
-    window._lastSupabaseSession = data.session;
-    let nickname = localStorage.getItem("nickname");
-    if (!nickname) {
-      nickname = prompt("Ingresa tu nickname (solo la primera vez):");
-      if (nickname) {
-        localStorage.setItem("nickname", nickname.trim());
-        setUser(nickname.trim());
-      }
-    }
-  }
-})();
-
-
-function delUser() {
-  localStorage.removeItem(USER_KEY);
-  localStorage.removeItem("nickname");
-}
-
-
-    let DB = loadDB();
-
-    /********************
-     * UI & NAVEGACIÓN  *
-     ********************/
-    const $ = (sel) => document.querySelector(sel);
-    const views = {
-      play: $('#viewPlay'),
-      create: $('#viewCreate'),
-      feed: $('#viewFeed'),
-      login: $('#viewLogin'),
-    };
-
-function show(which) {
-  // Ocultar todas las vistas
-  Object.values(views).forEach(v => v.classList.add('hidden'));
-  views[which].classList.remove('hidden');
-
-  // Si estás en "play", carga una pregunta aleatoria
-  if (which === 'play') {
-    loadRandom();
-  }
-
-  // Si estás en "feed", carga las preguntas y tags populares
-  if (which === 'feed') {
-    renderFeed();
-    loadPopularTags();
-  }
-
-  // Si estás en "create", carga las sugerencias de tags
-  if (which === 'create') {
-    loadTagSuggestions();
-  }
-
-  // Actualizar la barra de navegación
-  updateNav();
-}
-
-    
-
-    $('#navPlay').onclick = () => show('play');
-    $('#navCreate').onclick = () => show('create');
-    $('#navFeed').onclick = () => show('feed');
- 
-    
-
-    // LOGIN
-    $('#setNick').onclick = () => {
-      const nick = $('#nick').value.trim();
-      if (!nick) return alert('Escribe un nickname');
-      setUser(nick); updateNav(); alert('✓ Usuario guardado');
-    };
-    $('#logout').onclick = () => { delUser(); updateNav(); alert('Sesión local eliminada'); };
-
-        // === FOTO DE PERFIL LOCAL ===
-    document.getElementById("profilePic").addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result;
-        localStorage.setItem("user_photo", dataUrl);
-        document.getElementById("profilePreview").src = dataUrl;
-      };
-      reader.readAsDataURL(file);
-    });
-
-
-    // Al cargar la vista de login, mostrar la imagen si ya hay una guardada
-    window.addEventListener("load", () => {
-      const savedPhoto = localStorage.getItem("user_photo");
-      if (savedPhoto) document.getElementById("profilePreview").src = savedPhoto;
-    });
-
-    // HELPERS
-    function readFileToDataUrl(file){
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
-    async function resolveImage(urlInput, fileInput){
-      const url = urlInput.value.trim();
-      if (url) return url; // usar URL directa
-      const file = fileInput.files?.[0];
-      if (file) {
-        // Nota: se guarda como base64 en localStorage (solo prototipo)
-        try { return await readFileToDataUrl(file); } catch { return null; }
-      }
-      return null;
-    }
-
-    // CREATE
-    const fileA = $('#fileA');
-    const fileB = $('#fileB');
-    const urlA  = $('#urlA');
-    const urlB  = $('#urlB');
-    const prevA = $('#prevA');
-    const prevB = $('#prevB');
-
-    fileA?.addEventListener('change', async () => { const f = fileA.files?.[0]; prevA.src = f ? await readFileToDataUrl(f) : ''; });
-    fileB?.addEventListener('change', async () => { const f = fileB.files?.[0]; prevB.src = f ? await readFileToDataUrl(f) : ''; });
-    urlA?.addEventListener('change', () => { prevA.src = urlA.value || ''; });
-    urlB?.addEventListener('change', () => { prevB.src = urlB.value || ''; });
-
-    // Imagen principal de la pregunta
-    const fileQ = $('#fileQ');
-    const urlQ = $('#urlQ');
-    const prevQ = $('#prevQ');
-
-    fileQ?.addEventListener('change', async () => {
-      const f = fileQ.files?.[0];
-      prevQ.src = f ? await readFileToDataUrl(f) : '';
-    });
-    urlQ?.addEventListener('change', () => {
-      prevQ.src = urlQ.value || '';
-    });
-
-
-
-
-
-// ✅ Guardar pregunta con autor y foto del perfil
-// ✅ Guardar pregunta con autor, foto del perfil e imagen principal opcional (versión debug)
-$('#saveQ').onclick = async () => {
-  try {
-    console.log("📩 Publicando pregunta...");
-    const u = getUser();
-    if (!u) return alert('Primero inicia sesión (nickname o cuenta).');
-
-    const q = $('#inpQ').value.trim();
-    const a = $('#inpA').value.trim();
-    const b = $('#inpB').value.trim();
-    const tags = $('#inpTags')?.value?.trim() || '';
-
-    console.log("📋 Campos base:", { q, a, b, tags });
-
-    // Leer imágenes (con timeout de seguridad)
-    const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject('Timeout lectura imagen'), ms));
-
-    const qImg = await Promise.race([resolveImage(urlQ, fileQ), timeout(3000)]).catch(e => {
-      console.warn("⚠️ Error/timeout leyendo imagen principal:", e);
-      return null;
-    });
-    const aImg = await Promise.race([resolveImage(urlA, fileA), timeout(3000)]).catch(e => {
-      console.warn("⚠️ Error/timeout leyendo imagen A:", e);
-      return null;
-    });
-    const bImg = await Promise.race([resolveImage(urlB, fileB), timeout(3000)]).catch(e => {
-      console.warn("⚠️ Error/timeout leyendo imagen B:", e);
-      return null;
-    });
-
-    console.log("🖼️ Imágenes listas:", { qImg, aImg, bImg });
-
-    if (!q || !a || !b)
-      return alert('Completa la pregunta y ambas opciones.');
-
-    const { data: userData, error: userError } = await sb.auth.getUser();
-    if (userError) console.warn("Error obteniendo user:", userError);
-
-    const user = userData?.user;
-    let perfil = null;
-    let fotoFinal = null;
-
-    if (user) {
-      const { data: p, error: perError } = await sb
-        .from("perfiles")
-        .select("username, foto")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (perError) console.warn("Error buscando perfil:", perError);
-      perfil = p;
-    }
-
-    const fotoLocal = localStorage.getItem("user_photo");
-    fotoFinal = perfil?.foto || fotoLocal || null;
-
-    console.log("👤 Autor listo:", { perfil, fotoFinal });
-
-    // 🔥 Insertar en la tabla preguntas
-    const { data, error } = await sb.from("preguntas").insert({
-      pregunta: q,
-      opcion_a: a,
-      opcion_b: b,
-      imagen_a: aImg || null,
-      imagen_b: bImg || null,
-      imagen_pregunta: qImg || null,
-      autor: perfil?.username || u.nick || "Anónimo",
-      foto_autor: fotoFinal || null,
-      tags: tags.toString(),
-      votos_a: 0,
-      votos_b: 0,
-      created_at: new Date().toISOString()
-    }).select();
-
-    console.log("📤 Respuesta Supabase:", { data, error });
-
-    if (error) {
-      console.error("❌ Error al insertar:", error);
-      alert('⚠️ Error al publicar la pregunta. Revisa la consola.');
-      return;
-    }
-
-    alert('✅ Pregunta publicada correctamente.');
-    console.log("✅ Insert correcto:", data);
-
-    // limpiar formulario
-    $('#inpQ').value = '';
-    $('#inpA').value = '';
-    $('#inpB').value = '';
-    $('#inpTags').value = '';
-    urlA.value = '';
-    urlB.value = '';
-    urlQ.value = '';
-    if (prevA) prevA.src = '';
-    if (prevB) prevB.src = '';
-    if (prevQ) prevQ.src = '';
-    if (fileA) fileA.value = '';
-    if (fileB) fileB.value = '';
-    if (fileQ) fileQ.value = '';
-
-    show('play');
-  } catch (err) {
-    console.error("💥 Error inesperado en saveQ:", err);
-    alert('⚠️ Ocurrió un error inesperado. Revisa la consola.');
-  }
+<script type="module">
+// SURVIGAMES · ¿QUÉ PREFIERES? · Firebase Firestore
+// Mantiene las vistas originales y prepara una base extensible de preguntas y votos.
+import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js';
+import {
+  getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc,
+  query, orderBy, limit, startAfter, where, onSnapshot,
+  serverTimestamp, runTransaction, getCountFromServer
+} from 'https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyDyVuhGfDbGqYUUMW3gM3WmH_rD7iYpZec',
+  authDomain: 'survigames-5466d.firebaseapp.com',
+  projectId: 'survigames-5466d',
+  storageBucket: 'survigames-5466d.firebasestorage.app',
+  messagingSenderId: '393143398225',
+  appId: '1:393143398225:web:0ff9644034406f8a462d70'
+};
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = selector => document.querySelector(selector);
+const byId = id => document.getElementById(id);
+const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+const PAGE_SIZE = 20;
+const state = {
+  user: null, profile: null, current: null, questions: [],
+  cursor: null, filter: 'latest', tag: '', loading: false,
+  unsubscribeQuestions: null, unsubscribeVotes: null, lastId: null,
+  countCache: new Map()
 };
 
-
-
-    // PLAY
-    let current = null;
-    function setOption(elMedia, elCaption, text, img){
-      elCaption.textContent = text || '';
-      elMedia.innerHTML = '';
-      if (img) {
-        const im = new Image();
-        im.loading = 'lazy';
-        im.decoding = 'async';
-        im.alt = text || '';
-        im.src = img;
-        elMedia.appendChild(im);
-      } else {
-        elMedia.innerHTML = '<span class="muted">Sin imagen</span>';
-      }
-    }
-
+const views = {
+  play: byId('viewPlay'), create: byId('viewCreate'),
+  feed: byId('viewFeed'), login: byId('viewLogin')
+};
+function text(id, value) { const el=byId(id); if(el) el.textContent=value; }
+function escapeHTML(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function safeURL(url) {
+  try { const u=new URL(String(url||'')); return ['https:','http:'].includes(u.protocol) ? u.href : ''; }
+  catch { return ''; }
+}
+function show(view) {
+  Object.entries(views).forEach(([key,el]) => el?.classList.toggle('hidden', key !== view));
+  ['Play','Create','Feed'].forEach(key => byId('nav'+key)?.classList.toggle('primary',key.toLowerCase()===view));
+  if(view==='feed') renderFeed(true);
+  if(view==='create') loadTagSuggestions();
+  if(view==='login') renderProfile();
+}
+function tagsOf(value) {
+  return [...new Set(String(value||'').split(',').map(x=>x.trim().toLocaleLowerCase('es')).filter(Boolean))].slice(0,12);
+}
+function normalizeQuestion(id, data) {
+  return { id, ...data, tags: Array.isArray(data.tags) ? data.tags : tagsOf(data.tags) };
+}
+function dateOf(q) {
+  return q.created_at?.toDate?.() || new Date(q.created_at || 0);
+}
+function showError(prefix, err) {
+  console.error(prefix,err);
+  const code = err?.code || '';
+  if(code==='permission-denied') alert('Firebase bloqueó la operación. Revisá las reglas de Firestore.');
+  else alert(prefix+': '+(err?.message||'Error desconocido'));
+}
+function requireLogin() {
+  if(state.user) return true;
+  alert('Primero iniciá sesión en Survigames.');
+  window.location.href='index.html';
+  return false;
+}
+function updateAuthUI() {
+  text('authUser',state.profile?.username || state.user?.email || 'Invitado');
+  byId('btnSignIn')?.classList.toggle('hidden',!!state.user);
+  byId('btnSignOut')?.classList.toggle('hidden',!state.user);
+  text('authState',state.user ? `Sesión activa: ${state.user.email||state.user.uid}` : 'Sin sesión');
+}
+async function loadProfile() {
+  state.profile=null;
+  if(!state.user) return;
+  try {
+    const snap=await getDoc(doc(db,'perfiles',state.user.uid));
+    state.profile=snap.exists()?snap.data():null;
+  } catch(err) { console.warn('No se pudo leer perfil',err); }
+  updateAuthUI();
+}
+function renderProfile() {
+  byId('nick').value=state.profile?.username || state.profile?.nickname || localStorage.getItem('nickname') || '';
+  const photo=state.profile?.foto || localStorage.getItem('user_photo') || DEFAULT_AVATAR;
+  byId('profilePreview').src=safeURL(photo)||DEFAULT_AVATAR;
+  updateAuthUI();
+}
+async function saveProfile() {
+  if(!requireLogin()) return;
+  const nickname=byId('nick').value.trim();
+  if(nickname.length<2 || nickname.length>32) return alert('El nombre debe tener entre 2 y 32 caracteres.');
+  try {
+    await setDoc(doc(db,'perfiles',state.user.uid),{
+      username:nickname, updated_at:serverTimestamp()
+    },{merge:true});
+    localStorage.setItem('nickname',nickname);
+    await loadProfile();
+    alert('Perfil guardado correctamente.');
+    show('play');
+  } catch(err){showError('No se pudo guardar el perfil',err);}
+}
+function setupImages() {
+  for(const letter of ['Q','A','B']) {
+    const url=byId('url'+letter), file=byId('file'+letter), preview=byId('prev'+letter);
+    url?.addEventListener('input',()=>{preview.src=safeURL(url.value)||'';});
+    file?.addEventListener('change',()=>{
+      const f=file.files?.[0]; if(!f) return;
+      if(f.size>2*1024*1024) {alert('Usá imágenes de hasta 2 MB para la vista previa.');file.value='';return;}
+      const reader=new FileReader(); reader.onload=()=>{preview.src=reader.result;}; reader.readAsDataURL(f);
+    });
+  }
+  byId('profilePic')?.addEventListener('change',e=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    if(f.size>512*1024) {alert('La vista previa de foto debe pesar menos de 512 KB.');return;}
+    const r=new FileReader(); r.onload=()=>{
+      byId('profilePreview').src=r.result;
+      localStorage.setItem('user_photo',r.result); // Solo en este navegador; no se sube a Firestore.
+    }; r.readAsDataURL(f);
+  });
+}
+function clearForm() {
+  for(const id of ['inpQ','inpA','inpB','inpTags','urlQ','urlA','urlB','fileQ','fileA','fileB']) byId(id).value='';
+  for(const id of ['prevQ','prevA','prevB']) byId(id).removeAttribute('src');
+}
+async function publishQuestion() {
+  if(!requireLogin()) return;
+  const pregunta=byId('inpQ').value.trim();
+  const opcion_a=byId('inpA').value.trim();
+  const opcion_b=byId('inpB').value.trim();
+  if(!pregunta || !opcion_a || !opcion_b) return alert('Completá la pregunta y las dos opciones.');
+  if(pregunta.length>350 || opcion_a.length>160 || opcion_b.length>160) return alert('Reducí el texto de la pregunta o las opciones.');
+  const fileSelected=['Q','A','B'].some(x=>byId('file'+x).files?.length && !safeURL(byId('url'+x).value));
+  if(fileSelected) return alert('Para publicar imágenes visibles por todos, pegá una URL HTTPS. Los archivos locales solo se previsualizan por ahora.');
+  const imagen_pregunta=safeURL(byId('urlQ').value);
+  const imagen_a=safeURL(byId('urlA').value);
+  const imagen_b=safeURL(byId('urlB').value);
+  const invalid=['Q','A','B'].some(x=>byId('url'+x).value.trim()&&!safeURL(byId('url'+x).value));
+  if(invalid) return alert('Revisá las URL de las imágenes (deben ser http o https).');
+  const btn=byId('saveQ');btn.disabled=true;
+  try {
+    await addDoc(collection(db,'preguntas'),{
+      pregunta,opcion_a,opcion_b,imagen_pregunta,imagen_a,imagen_b,
+      tags:tagsOf(byId('inpTags').value),
+      autor:state.profile?.username || state.user.email?.split('@')[0] || 'Jugador',
+      autor_uid:state.user.uid,
+      foto_autor:safeURL(state.profile?.foto)||DEFAULT_AVATAR,
+      created_at:serverTimestamp(), updated_at:serverTimestamp(),
+      estado:'publicada', schema_version:1
+    });
+    clearForm(); alert('¡Pregunta publicada!');show('feed');
+  } catch(err){showError('Error publicando pregunta',err);}
+  finally{btn.disabled=false;}
+}
+function setOption(media,caption,label,image) {
+  caption.textContent=label||''; media.replaceChildren();
+  const url=safeURL(image);
+  if(url) {const img=document.createElement('img');img.src=url;img.alt=label||'Imagen';img.loading='lazy';media.append(img);}
+  else {const span=document.createElement('span');span.className='muted';span.textContent='Sin imagen';media.append(span);}
+}
+function authorHTML(item) {
+  const photo=safeURL(item.foto_autor)||DEFAULT_AVATAR;
+  return `<span style="display:inline-flex;align-items:center;gap:8px"><img src="${escapeHTML(photo)}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover"><strong>${escapeHTML(item.autor||'Anónimo')}</strong></span>`;
+}
+function setCurrent(item) {
+  state.current=item;
+  byId('qAuthor').innerHTML=authorHTML(item);
+  text('qText',item.pregunta);
+  setOption(byId('mediaA'),byId('captionA'),item.opcion_a,item.imagen_a);
+  setOption(byId('mediaB'),byId('captionB'),item.opcion_b,item.imagen_b);
+  byId('result').classList.add('hidden');
+  text('playStatus','');
+  if(state.unsubscribeVotes) state.unsubscribeVotes();
+  state.unsubscribeVotes=onSnapshot(collection(db,'preguntas',item.id,'votos'), snap=>{
+    let a=0,b=0,mine=null;
+    snap.forEach(d=>{const v=d.data();if(v.opcion==='A')a++;if(v.opcion==='B')b++;if(d.id===state.user?.uid)mine=v.opcion;});
+    item.votos_a=a;item.votos_b=b;
+    if(mine){showResult();text('playStatus',`Ya votaste por la opción ${mine}.`);}
+    else if(!byId('result').classList.contains('hidden')) showResult();
+  },err=>console.warn('No se pudo escuchar votos',err));
+  show('play');
+}
+function showResult() {
+  const a=state.current?.votos_a||0,b=state.current?.votos_b||0,total=a+b;
+  const pctA=total?Math.round(a*100/total):0;
+  text('pctA',pctA+'%');text('pctB',(total?100-pctA:0)+'%');
+  byId('fillA').style.width=pctA+'%';byId('fillB').style.width=(total?100-pctA:0)+'%';
+  byId('result').classList.remove('hidden');
+}
+async function vote(option) {
+  if(!requireLogin())return;
+  const q=state.current;if(!q)return;
+  const ref=doc(db,'preguntas',q.id,'votos',state.user.uid);
+  try {
+    await runTransaction(db,async tx=>{
+      const snap=await tx.get(ref);
+      if(snap.exists()) throw new Error('Ya votaste en esta pregunta.');
+      tx.set(ref,{uid:state.user.uid,opcion:option,created_at:serverTimestamp()});
+    });
+    text('playStatus',`Votaste por ${option}.`);
+    showResult();
+  } catch(err){if(String(err.message).includes('Ya votaste'))alert(err.message);else showError('No se pudo votar',err);}
+}
 async function loadRandom() {
   try {
-    const { data, error } = await sb
-      .from('preguntas')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-      $('#qText').textContent = "No hay preguntas aún 😢";
-      $('#qAuthor').textContent = "";
-      return;
+    if(!state.questions.length) {
+      const snap=await getDocs(query(collection(db,'preguntas'),orderBy('created_at','desc'),limit(80)));
+      state.questions=snap.docs.map(d=>normalizeQuestion(d.id,d.data()));
     }
-
-    // Elegir una pregunta aleatoria
-    const item = data[Math.floor(Math.random() * data.length)];
-    current = item;
-    const authorBox = document.getElementById('qAuthor');
-    authorBox.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
-        <img src="${item.foto_autor || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" 
-            style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
-        <span>${item.autor || 'Anónimo'}</span>
-      </div>
-    `;
-
-    $('#qText').textContent = item.pregunta;
-    setOption($('#mediaA'), $('#captionA'), item.opcion_a, item.imagen_a);
-    setOption($('#mediaB'), $('#captionB'), item.opcion_b, item.imagen_b);
-    $('#result').classList.add('hidden');
-  } catch (err) {
-    console.error("Error cargando pregunta:", err);
-    $('#qText').textContent = "⚠️ Error cargando preguntas";
-  }
+    if(!state.questions.length){text('qText','Todavía no hay preguntas. ¡Creá la primera!');text('qAuthor','—');return;}
+    const candidates=state.questions.filter(q=>q.id!==state.lastId);
+    const pool=candidates.length?candidates:state.questions;
+    const item=pool[Math.floor(Math.random()*pool.length)];
+    state.lastId=item.id;setCurrent(item);
+  }catch(err){console.error(err);text('qText','No se pudieron cargar las preguntas.');}
 }
-
-
-async function vote(which) {
-  const u = getUser();
-  if (!u) return alert('Primero inicia sesión (nickname).');
-  if (!current) return;
-
-  const field = which === 'A' ? 'votos_a' : 'votos_b';
-  const newValue = (current[field] || 0) + 1;
-
-  const { error } = await sb
-    .from('preguntas')
-    .update({ [field]: newValue })
-    .eq('id', current.id);
-
-  if (error) {
-    console.error(error);
-    alert('⚠️ Error registrando el voto.');
-    return;
-  }
-
-  current[field] = newValue;
-  showResult();
+function makeFeedCard(item) {
+  const el=document.createElement('article');el.className='card stack';el.style.padding='18px';
+  const photo=safeURL(item.foto_autor)||DEFAULT_AVATAR;
+  const a=safeURL(item.imagen_a),b=safeURL(item.imagen_b);
+  const total=(item.votos_a||0)+(item.votos_b||0);
+  const pct=total?Math.round(100*(item.votos_a||0)/total):0;
+  el.innerHTML=`
+    <div class="muted">${authorHTML(item)}</div>
+    <div class="question-text center">${escapeHTML(item.pregunta)}</div>
+    ${safeURL(item.imagen_pregunta)?`<img src="${escapeHTML(safeURL(item.imagen_pregunta))}" alt="Imagen de pregunta" loading="lazy" style="width:100%;max-height:260px;object-fit:cover;border-radius:12px">`:''}
+    <div class="row two">
+      <div class="thumb">${a?`<img loading="lazy" src="${escapeHTML(a)}" alt="Opción A">`:'<span class="muted">Sin imagen</span>'}</div>
+      <div class="thumb">${b?`<img loading="lazy" src="${escapeHTML(b)}" alt="Opción B">`:'<span class="muted">Sin imagen</span>'}</div>
+    </div>
+    <div class="row two"><div class="pill">A: ${escapeHTML(item.opcion_a)}</div><div class="pill">B: ${escapeHTML(item.opcion_b)}</div></div>
+    <div class="muted">${(item.tags||[]).map(t=>'#'+escapeHTML(t)).join(' · ')}</div>
+    <div class="stats"><div class="bar"><div class="fill a" style="width:${pct}%"></div></div><div class="bar"><div class="fill b" style="width:${total?100-pct:0}%"></div></div></div>
+    <div class="row two"><button class="play-card primary">Jugar esta</button><span class="pill vote-count">${total} votos</span></div>`;
+  el.querySelector('.play-card').onclick=()=>setCurrent(item);
+  return el;
 }
-
-
-function showResult() {
-  // Usamos los nombres reales de columnas de tu tabla
-  const votosA = Number(current.votos_a ?? 0);
-  const votosB = Number(current.votos_b ?? 0);
-  const total = votosA + votosB;
-
-  // Si aún no hay votos, mostramos 0%
-  const pctA = total > 0 ? Math.round((votosA / total) * 100) : 0;
-  const pctB = total > 0 ? Math.round((votosB / total) * 100) : 0;
-
-  // Actualizamos los textos y barras
-  $('#pctA').textContent = `${pctA}%`;
-  $('#pctB').textContent = `${pctB}%`;
-  $('#fillA').style.width = `${pctA}%`;
-  $('#fillB').style.width = `${pctB}%`;
-
-  $('#result').classList.remove('hidden');
+async function fetchCounts(item,el) {
+  try {
+    const votes=collection(db,'preguntas',item.id,'votos');
+    const [a,b]=await Promise.all([
+      getCountFromServer(query(votes,where('opcion','==','A'))),
+      getCountFromServer(query(votes,where('opcion','==','B')))
+    ]);
+    item.votos_a=a.data().count;item.votos_b=b.data().count;
+    const total=item.votos_a+item.votos_b,pct=total?Math.round(100*item.votos_a/total):0;
+    el.querySelector('.fill.a').style.width=pct+'%';
+    el.querySelector('.fill.b').style.width=(total?100-pct:0)+'%';
+    el.querySelector('.vote-count').textContent=total+' votos';
+  }catch(err){console.warn('Conteo no disponible',err);}
 }
-
-
-    $('#optA').onclick = () => vote('A');
-    $('#optB').onclick = () => vote('B');
-    $('#next').onclick = () => loadRandom();
-
-    $('#share').onclick = async () => {
-      const text = `¿Qué prefieres? ${current.q}
-A) ${current.a}
-B) ${current.b}`;
-      try {
-        await navigator.clipboard.writeText(text);
-        alert('Copiado al portapapeles ✅');
-      } catch {
-        alert('No se pudo copiar.');
-      }
-    };
-
-
-/*******************************
- * 🧠 Cargar sugerencias de tags
- *******************************/
+async function renderFeed(reset=false) {
+  if(state.loading)return;
+  if(reset){state.cursor=null;state.questions=[];}
+  const list=byId('feedList');
+  if(reset)list.replaceChildren();
+  state.loading=true;
+  try {
+    const col=collection(db,'preguntas');
+    let constraints=[];
+    if(state.filter==='mine') constraints.push(where('autor_uid','==',state.user.uid));
+    if(state.filter==='tag') constraints.push(where('tags','array-contains',state.tag));
+    // Filtrar primero en Firestore, sin índices compuestos adicionales.
+    if(state.filter==='latest')constraints.push(orderBy('created_at','desc'));
+    if(state.cursor)constraints.push(startAfter(state.cursor));
+    constraints.push(limit(PAGE_SIZE));
+    const base=query(col,...constraints);
+    const snap=await getDocs(base);
+    state.cursor=snap.docs.at(-1)||null;
+    let items=snap.docs.map(d=>normalizeQuestion(d.id,d.data()));
+    if(state.filter!=='latest')items.sort((a,b)=>dateOf(b)-dateOf(a));
+    state.questions.push(...items.filter(x=>!state.questions.some(y=>y.id===x.id)));
+    if(reset && !items.length)state.questions=[];
+    for(const item of items){const el=makeFeedCard(item);list.append(el);fetchCounts(item,el);}
+    if(!list.children.length)list.innerHTML='<p class="muted">No hay preguntas para este filtro.</p>';
+    byId('feedMore').classList.toggle('hidden',snap.size<PAGE_SIZE);
+    await loadPopularTags();
+  }catch(err){console.error(err);if(!list.children.length)list.innerHTML='<p class="muted">No se pudo cargar Explorar. Revisá las reglas de Firestore.</p>';}
+  finally{state.loading=false;}
+}
+async function loadPopularTags() {
+  const holder=byId('tagsList'); if(!holder)return;
+  try {
+    const snap=await getDocs(query(collection(db,'preguntas'),orderBy('created_at','desc'),limit(100)));
+    const counts=new Map();
+    snap.docs.forEach(d=>tagsOf(Array.isArray(d.data().tags)?d.data().tags.join(','):d.data().tags).forEach(t=>counts.set(t,(counts.get(t)||0)+1)));
+    holder.replaceChildren();
+    for(const [tag,n] of [...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,12)){
+      const btn=document.createElement('button');btn.className='btn';btn.textContent=`#${tag} (${n})`;btn.onclick=()=>searchByTag(tag);holder.append(btn);
+    }
+    if(!counts.size)holder.textContent='Todavía no hay etiquetas.';
+  }catch(err){console.warn('Tags',err);holder.textContent='Etiquetas no disponibles';}
+}
 async function loadTagSuggestions() {
+  const el=byId('tagsSugeridos');el.replaceChildren();
   try {
-    const { data, error } = await sb
-      .from("preguntas")
-      .select("tags");
-
-    if (error) throw error;
-
-    const tagsUnicos = new Set();
-
-    data.forEach(row => {
-      if (row.tags) {
-        const t = Array.isArray(row.tags) ? row.tags : row.tags.split(",");
-        t.forEach(x => {
-          const clean = x.trim().toLowerCase();
-          if (clean) tagsUnicos.add(clean);
-        });
+    const snap=await getDocs(query(collection(db,'preguntas'),orderBy('created_at','desc'),limit(100)));
+    const tags=new Set();snap.docs.forEach(d=>tagsOf(Array.isArray(d.data().tags)?d.data().tags.join(','):d.data().tags).forEach(t=>tags.add(t)));
+    [...tags].sort().forEach(t=>{const option=document.createElement('option');option.value=t;el.append(option);});
+  }catch(err){console.warn(err);}
+}
+function searchByTag(tag) {
+  state.filter='tag';state.tag=tag.trim().toLocaleLowerCase('es');
+  byId('searchTag').value=state.tag;renderFeed(true);
+}
+function setupUI() {
+  byId('navPlay').onclick=()=>{show('play');if(!state.current)loadRandom();};
+  byId('navCreate').onclick=()=>{if(requireLogin())show('create');};
+  byId('navFeed').onclick=()=>show('feed');
+  byId('btnSignIn').onclick=()=>window.location.href='index.html';
+  byId('btnSignOut').onclick=async()=>{await signOut(auth);window.location.href='index.html';};
+  byId('logout').onclick=async()=>{await signOut(auth);window.location.href='index.html';};
+  byId('setNick').onclick=saveProfile;
+  byId('saveQ').onclick=publishQuestion;
+  byId('clearForm').onclick=clearForm;
+  byId('optA').onclick=()=>vote('A');byId('optB').onclick=()=>vote('B');
+  for(const letter of ['A','B'])byId('opt'+letter).addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();vote(letter);}});
+  byId('next').onclick=loadRandom;
+  byId('share').onclick=async()=>{
+    if(!state.current)return;
+    const q=state.current;
+    const share=`¿Qué prefieres? ${q.pregunta}\nA) ${q.opcion_a}\nB) ${q.opcion_b}\n${location.origin+location.pathname}?q=${encodeURIComponent(q.id)}`;
+    try {await navigator.clipboard.writeText(share);alert('¡Pregunta copiada!');}
+    catch {prompt('Copiá esta pregunta:',share);}
+  };
+  byId('btnSearchTag').onclick=()=>searchByTag(byId('searchTag').value);
+  byId('searchTag').addEventListener('keydown',e=>{if(e.key==='Enter')searchByTag(e.target.value);});
+  byId('feedLatest').onclick=()=>{state.filter='latest';state.tag='';byId('searchTag').value='';renderFeed(true);};
+  byId('feedMine').onclick=()=>{if(!requireLogin())return;state.filter='mine';renderFeed(true);};
+  byId('feedMore').onclick=()=>renderFeed(false);
+  setupImages();
+}
+async function boot() {
+  setupUI();
+  show('play');
+  onAuthStateChanged(auth,async user=>{
+    state.user=user;
+    await loadProfile();updateAuthUI();
+    if(!state.current) {
+      const qId=new URLSearchParams(location.search).get('q');
+      if(qId) {
+        try {const snap=await getDoc(doc(db,'preguntas',qId));if(snap.exists()){setCurrent(normalizeQuestion(snap.id,snap.data()));return;}}
+        catch(err){console.warn('Enlace de pregunta',err);}
       }
-    });
-
-    // Rellenar datalist
-    const list = document.getElementById("tagsSugeridos");
-    list.innerHTML = ""; // limpiar viejo
-
-    Array.from(tagsUnicos).forEach(tag => {
-      const opt = document.createElement("option");
-      opt.value = tag;
-      list.appendChild(opt);
-    });
-
-    console.log(`✅ ${tagsUnicos.size} tags cargados en sugerencias.`);
-  } catch (err) {
-    console.error("⚠️ Error cargando tags sugeridos:", err);
-  }
-}
-
-
-    // FEED
-async function renderFeed() {
-  try {
-    const list = document.getElementById("feedList");
-    list.innerHTML = "<p class='muted'>Cargando preguntas...</p>";
-
-    const { data, error } = await sb
-      .from("preguntas")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-      list.innerHTML = "<p class='muted'>No hay preguntas todavía 😢</p>";
-      return;
-    }
-
-    list.innerHTML = "";
-
-    data.forEach(item => {
-      const total = (item.votos_a + item.votos_b) || 0;
-      const pct = total ? Math.round(item.votos_a * 100 / total) : 0;
-
-      const el = document.createElement("div");
-      el.className = "card stack";
-      el.style.padding = "18px";
-
-      el.innerHTML = `
-        <!-- 🧑 Autor con foto -->
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <img src="${item.foto_autor || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
-               alt="foto de autor"
-               style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid #303a5a;">
-          <span class="muted" style="font-size:14px;">Por <strong>${item.autor || 'Anónimo'}</strong></span>
-        </div>
-
-        <!-- ❓ Pregunta -->
-        <div class="question-text center">${item.pregunta}</div>
-
-        <!-- 🖼️ Opciones -->
-        <div class="row two" style="margin-top:8px;">
-          <div class="thumb">${item.imagen_a ? `<img src="${item.imagen_a}" alt="A"/>` : '<span class="muted">Sin imagen</span>'}</div>
-          <div class="thumb">${item.imagen_b ? `<img src="${item.imagen_b}" alt="B"/>` : '<span class="muted">Sin imagen</span>'}</div>
-        </div>
-
-        <!-- 🅰️ y 🅱️ textos -->
-        <div class="row two">
-          <div class="pill">A: ${item.opcion_a}</div>
-          <div class="pill right">B: ${item.opcion_b}</div>
-        </div>
-
-        <!-- 📊 Votos -->
-        <div class="stats">
-          <div class="bar"><div class="fill a" style="width:${pct}%"></div></div>
-          <div class="bar"><div class="fill b" style="width:${100 - pct}%"></div></div>
-        </div>
-
-        <!-- 🎮 Botón de jugar -->
-        <div class="row two" style="margin-top:10px;">
-          <button class="btn" data-id="${item.id}">Jugar esta</button>
-          <div class="pill">Votos: ${total}</div>
-        </div>
-      `;
-
-      el.querySelector("button").onclick = () => {
-        current = item;
-        document.getElementById("qAuthor").innerHTML = `
-          <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
-            <img src="${item.foto_autor || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}"
-                 style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
-            <span>${item.autor || 'Anónimo'}</span>
-          </div>`;
-        document.getElementById("qText").textContent = item.pregunta;
-        setOption(document.getElementById("mediaA"), document.getElementById("captionA"), item.opcion_a, item.imagen_a);
-        setOption(document.getElementById("mediaB"), document.getElementById("captionB"), item.opcion_b, item.imagen_b);
-        show("play");
-      };
-
-      list.appendChild(el);
-    });
-  } catch (err) {
-    console.error("Error cargando preguntas:", err);
-    document.getElementById("feedList").innerHTML = "<p class='muted'>⚠️ Error cargando preguntas.</p>";
-  }
-}
-
-
-  /***********************
- * 🔥 TAGS POPULARES
- ***********************/
-async function loadPopularTags() {
-  try {
-    const { data, error } = await sb.rpc('get_popular_tags');
-    const tagsList = document.getElementById('tagsList');
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-      tagsList.textContent = "No hay tags aún 😢";
-      return;
-    }
-
-    // Mostrar tags como botones clickeables
-    tagsList.innerHTML = data
-      .map(t => `<button class="btn tag-btn" data-tag="${t.tag}">${t.tag} (${t.count})</button>`)
-      .join(' ');
-
-    // Asignar acción a cada botón
-    document.querySelectorAll('.tag-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        searchByTag(btn.dataset.tag);
-      });
-    });
-  } catch (err) {
-    console.error("Error cargando tags:", err);
-    document.getElementById('tagsList').textContent = "⚠️ Error cargando tags.";
-  }
-}
-
-/***********************
- * 🔎 BUSCAR POR TAG
- ***********************/
-async function searchByTag(tagName) {
-  try {
-    const list = document.getElementById('feedList');
-    list.innerHTML = `<p class="muted">Buscando preguntas con el tag <strong>${tagName}</strong>...</p>`;
-
-    const { data, error } = await sb
-      .from('preguntas')
-      .select('*')
-      .contains('tags', [tagName]); // busca coincidencias en el array
-
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-      list.innerHTML = `<p class="muted">No se encontraron preguntas con el tag <strong>${tagName}</strong>.</p>`;
-      return;
-    }
-
-    // Mostrar resultados reutilizando el render
-    list.innerHTML = "";
-    data.forEach(item => {
-      const total = (item.votos_a + item.votos_b) || 0;
-      const pct = total ? Math.round(item.votos_a * 100 / total) : 0;
-
-      const el = document.createElement('div');
-      el.className = 'card stack';
-      el.innerHTML = `
-        <div class="muted">Por <strong>${item.autor || 'Anónimo'}</strong></div>
-        <div class="question-text center">${item.pregunta}</div>
-        <div class="row two">
-          <div class="thumb">${item.imagen_a ? `<img src="${item.imagen_a}" alt="A"/>` : '<span class="muted">Sin imagen</span>'}</div>
-          <div class="thumb">${item.imagen_b ? `<img src="${item.imagen_b}" alt="B"/>` : '<span class="muted">Sin imagen</span>'}</div>
-        </div>
-        <div class="row two">
-          <div class="pill">A: ${item.opcion_a}</div>
-          <div class="pill right">B: ${item.opcion_b}</div>
-        </div>
-      `;
-      list.appendChild(el);
-    });
-  } catch (err) {
-    console.error("Error en búsqueda:", err);
-  }
-}
-
-// Asignar acción al botón Buscar
-document.getElementById('btnSearchTag').addEventListener('click', () => {
-  const tag = document.getElementById('searchTag').value.trim();
-  if (tag) searchByTag(tag);
-});
-
-// 🌟 Cargar y mostrar los tags más populares
-async function loadPopularTags() {
-  const cont = document.getElementById('popularTags');
-  const loading = document.getElementById('tagsLoading');
-
-  try {
-    // Consulta SQL directa para contar las etiquetas más usadas
-    const { data, error } = await sb.rpc('get_popular_tags');
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-      loading.textContent = "No hay etiquetas todavía 😢";
-      return;
-    }
-
-    loading.remove();
-    cont.innerHTML = '';
-
-    data.forEach(tag => {
-      const el = document.createElement('span');
-      el.className = 'pill';
-      el.style.cursor = 'pointer';
-      el.textContent = `#${tag.tag} (${tag.count})`;
-      el.onclick = () => filterByTag(tag.tag);
-      cont.appendChild(el);
-    });
-  } catch (err) {
-    console.error("Error cargando tags populares:", err);
-    loading.textContent = "⚠️ No se pudieron cargar las etiquetas.";
-  }
-}
-
-async function filterByTag(tag) {
-  try {
-    const list = $('#feedList');
-    list.innerHTML = `<p class='muted'>Buscando preguntas con el tag <b>#${tag}</b>...</p>`;
-
-    const { data, error } = await sb
-      .from('preguntas')
-      .select('*')
-      .contains('tags', [tag]); // filtra preguntas que contengan el tag
-
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-      list.innerHTML = `<p class='muted'>No hay preguntas con el tag <b>#${tag}</b> 😢</p>`;
-      return;
-    }
-
-    list.innerHTML = '';
-    data.forEach(item => {
-      const total = (item.votos_a + item.votos_b) || 0;
-      const pct = total ? Math.round(item.votos_a * 100 / total) : 0;
-
-      const el = document.createElement('div');
-      el.className = 'card stack';
-      el.innerHTML = `
-        <div class="muted">Por <strong>${item.autor || 'Anónimo'}</strong></div>
-        <div class="question-text center">${item.pregunta}</div>
-        <div class="row two">
-          <div class="thumb">${item.imagen_a ? `<img src="${item.imagen_a}" alt="A"/>` : '<span class="muted">Sin imagen</span>'}</div>
-          <div class="thumb">${item.imagen_b ? `<img src="${item.imagen_b}" alt="B"/>` : '<span class="muted">Sin imagen</span>'}</div>
-        </div>
-        <div class="row two">
-          <div class="pill">A: ${item.opcion_a}</div>
-          <div class="pill right">B: ${item.opcion_b}</div>
-        </div>
-        <div class="stats">
-          <div class="bar"><div class="fill a" style="width:${pct}%"></div></div>
-          <div class="bar"><div class="fill b" style="width:${100 - pct}%"></div></div>
-        </div>
-      `;
-      list.appendChild(el);
-    });
-  } catch (err) {
-    console.error("Error filtrando por tag:", err);
-  }
-}
-// ✅ Función que actualiza la barra de navegación
-function updateNav() {
-  const navButtons = document.querySelectorAll('nav button');
-
-  // Quitar color activo de todos
-  navButtons.forEach(btn => btn.classList.remove('primary'));
-
-  // Detectar qué vista está visible
-  for (const [key, view] of Object.entries(views)) {
-    if (!view.classList.contains('hidden')) {
-      const navId = `nav${key.charAt(0).toUpperCase() + key.slice(1)}`;
-      const btn = document.getElementById(navId);
-      if (btn) btn.classList.add('primary'); // resalta el botón activo
-    }
-  }
-}
-
-
-    // START
-    (function init(){
-      updateNav();
-      show('play');
-    })();
-
-    // === LOGIN SYSTEM ===
-
-// Referencias a los botones
-const btnSignIn = document.getElementById('btnSignIn');
-const btnSignOut = document.getElementById('btnSignOut');
-const authUser = document.getElementById('authUser');
-
-
-
-// --- FUNCIÓN DE LOGIN ---
-btnSignIn.addEventListener('click', async () => {
-  const email = prompt("📧 Ingresa tu correo para iniciar sesión:");
-
-  if (!email) return alert("Debes ingresar un correo.");
-
-  const { error } = await sb.auth.signInWithOtp({
-    email: email,
-    options: {
-    emailRedirectTo: "https://luiskq1225-dotcom.github.io/survigames/"
-
-  // vuelve a tu sitio
+      loadRandom();
     }
   });
-
-  if (error) {
-    alert("Error al enviar el enlace: " + error.message);
-  } else {
-    alert("📩 Te enviamos un enlace mágico a tu correo. Revisa tu bandeja!");
-  }
-});
-
-
-// --- ACTUALIZAR UI ---
-// 🔐 Detectar inicio/cierre de sesión y redirigir si falta foto o nickname
-sb.auth.onAuthStateChange(async (_event, session) => {
-  const user = session?.user;
-  if (user) {
-    authUser.textContent = user.email;
-    btnSignIn.classList.add('hidden');
-    btnSignOut.classList.remove('hidden');
-
-    await syncUserNickname(); // sincroniza nickname local
-
-    // 🧠 Buscar si ya tiene perfil en Supabase
-    const { data: perfil } = await sb
-      .from("perfiles")
-      .select("foto, username")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    const localFoto = localStorage.getItem("user_photo");
-    const localNick = localStorage.getItem("nickname");
-
-    // 🚨 Si no tiene nickname o foto → llevarlo a la vista de perfil
-    if ((!perfil?.foto && !localFoto) || !localNick) {
-      alert("📸 Antes de continuar, personaliza tu perfil con una foto y nombre.");
-      show('login');
-    } else {
-      show('play');
-    }
-  } else {
-    authUser.textContent = 'Invitado';
-    btnSignIn.classList.remove('hidden');
-    btnSignOut.classList.add('hidden');
-    show('play');
-  }
-});
-
-
-
-// Revisar si ya está logueado al cargar la página
-(async () => {
-  const { data } = await sb.auth.getSession();
-  const user = data?.session?.user;
-
-  if (user) {
-    // Mostrar email
-    authUser.textContent = user.email;
-    btnSignIn.classList.add('hidden');
-    btnSignOut.classList.remove('hidden');
-
-    // 🧩 Nuevo: obtener o guardar el nickname
-    let nickname = localStorage.getItem("nickname");
-
-    // Si no hay nickname guardado, pedí uno o usá el que el usuario haya escrito en login
-    if (!nickname) {
-      nickname = prompt("Ingresa tu nickname (solo la primera vez):");
-      if (nickname) {
-        localStorage.setItem("nickname", nickname.trim());
-      }
-    }
-
-  } else {
-    // No hay sesión activa
-    btnSignIn.classList.remove('hidden');
-    btnSignOut.classList.add('hidden');
-  }
-})();
-// 🧩 Si el usuario viene de "Explorar" y había guardado una pregunta
-window.addEventListener('load', () => {
-  const last = localStorage.getItem('lastPlayed');
-  if (last) {
-    try {
-      const item = JSON.parse(last);
-      current = item;
-      $('#qAuthor').textContent = item.author || 'anon';
-      $('#qText').textContent = item.q;
-      setOption($('#mediaA'), $('#captionA'), item.a, item.aImg);
-      setOption($('#mediaB'), $('#captionB'), item.b, item.bImg);
-      $('#result').classList.add('hidden');
-    } catch {}
-    localStorage.removeItem('lastPlayed');
-  }
-});
-
-// 🔔 Escuchar cambios en tiempo real
-sb
-  .channel('realtime-preguntas')
-  .on(
-    'postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'preguntas' },
-    (payload) => {
-      console.log('Nueva pregunta publicada:', payload.new);
-      agregarPreguntaAExplorar(payload.new);
-    }
-  )
-  .subscribe();
-
-// 👇 Esta función agrega visualmente la nueva pregunta
-function agregarPreguntaAExplorar(pregunta) {
-  const contenedor = document.getElementById('explorarContainer');
-  if (!contenedor) return;
-
-  const item = document.createElement('div');
-  item.classList.add('pregunta-card');
-  item.innerHTML = `
-    <h3>${pregunta.pregunta}</h3>
-    <div class="opciones">
-      <div><img src="${pregunta.imagen_a || ''}" alt="">${pregunta.opcion_a}</div>
-      <div><img src="${pregunta.imagen_b || ''}" alt="">${pregunta.opcion_b}</div>
-    </div>
-    <p>Por: ${pregunta.autor || 'anon'}</p>
-  `;
-  contenedor.prepend(item);
 }
-
-
- </script>
+boot();
+</script>
 </body>
 </html>
 
